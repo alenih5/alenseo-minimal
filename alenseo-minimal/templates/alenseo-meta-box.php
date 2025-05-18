@@ -70,7 +70,7 @@ $claude_api_active = !empty($settings['claude_api_key']);
             
             <div class="alenseo-keyword-generator">
                 <div class="alenseo-kw-generator-trigger">
-                    <button type="button" class="button" id="alenseo-generate-keywords">
+                    <button type="button" class="button" id="alenseo-generate-keywords" data-post-id="<?php echo esc_attr($post->ID); ?>">
                         <?php _e('Keywords generieren', 'alenseo'); ?>
                     </button>
                     <?php if ($claude_api_active) : ?>
@@ -150,6 +150,12 @@ $claude_api_active = !empty($settings['claude_api_key']);
                 <?php
             }
             ?>
+            
+            <div class="alenseo-analysis-actions">
+                <button type="button" class="button alenseo-analyze-button" data-post-id="<?php echo esc_attr($post->ID); ?>">
+                    <span class="dashicons dashicons-visibility"></span> <?php _e('Neu analysieren', 'alenseo'); ?>
+                </button>
+            </div>
         </div>
         
         <?php if ($claude_api_active) : ?>
@@ -191,7 +197,7 @@ $claude_api_active = !empty($settings['claude_api_key']);
                     <div class="alenseo-suggestion-error" style="display: none;"></div>
                     
                     <div class="alenseo-suggestions-actions">
-                        <button type="button" class="button button-primary" id="alenseo-generate-suggestions">
+                        <button type="button" class="button button-primary" id="alenseo-generate-suggestions" data-post-id="<?php echo esc_attr($post->ID); ?>">
                             <?php _e('Optimierungsvorschläge generieren', 'alenseo'); ?>
                         </button>
                     </div>
