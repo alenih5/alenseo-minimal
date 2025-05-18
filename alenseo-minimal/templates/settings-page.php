@@ -155,6 +155,23 @@ $claude_models = array(
     .alenseo-checkbox-item input {
         margin-right: 5px;
     }
+
+    .alenseo-api-info {
+        margin-top: 15px;
+        padding: 15px;
+        background-color: #f0f8ff;
+        border: 1px solid #add8e6;
+        border-radius: 5px;
+    }
+
+    .alenseo-api-info h3 {
+        margin-top: 0;
+        color: #0073aa;
+    }
+
+    .alenseo-api-info ul {
+        margin-left: 20px;
+    }
 </style>
 
 <div class="wrap">
@@ -209,6 +226,17 @@ $claude_models = array(
                 <!-- Claude API Einstellungen -->
                 <div class="alenseo-settings-section" id="alenseo-tab-api">
                     <h2><?php _e('Claude API Einstellungen', 'alenseo'); ?></h2>
+                    
+                    <div class="alenseo-api-info">
+                        <h3><?php _e('Claude API-Funktionen', 'alenseo'); ?></h3>
+                        <p><?php _e('Mit der Claude API erhältst du folgende KI-gestützte Funktionen:', 'alenseo'); ?></p>
+                        <ul>
+                            <li><?php _e('Intelligenter Keyword-Generator, der auf Basis des Inhalts relevante Keywords vorschlägt', 'alenseo'); ?></li>
+                            <li><?php _e('Optimierungsvorschläge für Titel, Meta-Beschreibung und Inhalt', 'alenseo'); ?></li>
+                            <li><?php _e('SEO-Analyse mit spezifischen Verbesserungsmöglichkeiten', 'alenseo'); ?></li>
+                        </ul>
+                        <p><?php _e('Um diese Funktionen zu nutzen, benötigst du einen API-Schlüssel von Anthropic.', 'alenseo'); ?></p>
+                    </div>
                     
                     <table class="form-table">
                         <tr valign="top">
