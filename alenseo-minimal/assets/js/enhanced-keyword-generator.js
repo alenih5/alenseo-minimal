@@ -107,11 +107,19 @@ jQuery(document).ready(function($) {
         // Keywords hinzufügen
         $.each(keywords, function(index, keyword) {
             var item = $('<li class="alenseo-kw-item"></li>');
+            var keywordText = keyword.keyword || keyword; // Unterstütze sowohl Objekte als auch Strings
+            var score = keyword.score || '';
             
-            item.html('<span class="alenseo-kw-text">' + keyword + '</span><button type="button" class="button button-small alenseo-kw-select">Auswählen</button>');
+            var itemHtml = '<span class="alenseo-kw-text">' + keywordText + '</span>';
+            if (score) {
+                itemHtml += ' <small class="alenseo-kw-score">(' + score + ')</small>';
+            }
+            itemHtml += '<button type="button" class="button button-small alenseo-kw-select">Auswählen</button>';
+            
+            item.html(itemHtml);
             
             item.find('.alenseo-kw-select').on('click', function() {
-                keywordField.val(keyword);
+                keywordField.val(keywordText);
                 generatorContent.slideUp();
             });
             
@@ -253,4 +261,50 @@ jQuery(document).ready(function($) {
             }
         });
     }
+    
+    // Analyse-Button
+    $('.alenseo-analyze-button').on('click', function() {
+        var button = $(this);
+        var postId = button.data('post-id');
+        
+        // Button deaktivieren und Ladeanimation anzeigen
+        button.prop('disabled', true);
+        var originalText = button.html();
+        button.html('<span class="dashicons dashicons-update"></span> Analysiere...');
+        
+        // AJAX-Anfrage für Analyse
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_analyze_post',
+                post_id: postId,
+                nonce: alenseoData.nonce
+            },
+            success: function(response) {
+                // Button zurücksetzen
+                button.prop('disabled', false);
+                button.html(originalText);
+                
+                if (response.success) {
+                    // Erfolgsmeldung
+                    alert(response.data.message || 'Analyse erfolgreich durchgeführt.');
+                    
+                    // Seite neu laden, um Ergebnisse anzuzeigen
+                    location.reload();
+                } else {
+                    // Fehlermeldung
+                    alert(response.data.message || 'Fehler bei der Analyse.');
+                }
+            },
+            error: function() {
+                // Button zurücksetzen
+                button.prop('disabled', false);
+                button.html(originalText);
+                
+                // Fehlermeldung
+                alert('Fehler bei der Kommunikation mit dem Server.');
+            }
+        });
+    });
 });
