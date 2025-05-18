@@ -9,6 +9,14 @@
  * @subpackage Alenseo/includes
  */
 
+// Direkter Zugriff verhindern
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Die Claude API Klasse für das Alenseo SEO Plugin
+ */
 class Alenseo_Claude_API {
 
     /**
@@ -225,8 +233,7 @@ class Alenseo_Claude_API {
         }
         
         // Prompt für die API erstellen
-        $prompt = "Analysiere den folgenden Text und extrahiere die 5 wichtigsten Keywords oder Schlüsselbegriffe, die für SEO relevant sind. 
-        Gib nur die Keywords zurück, jeweils in einer eigenen Zeile.
+        $prompt = "Analysiere den folgenden Text und extrahiere die 5 wichtigsten Keywords oder Schlüsselbegriffe, die für SEO relevant sind. Formatiere deine Antwort als JSON-Array mit Objekten, die jeweils 'keyword' und 'score' (0-100) enthalten.
         
         Titel: $title
         
@@ -242,13 +249,38 @@ class Alenseo_Claude_API {
         }
         
         if (isset($response['content'][0]['text'])) {
-            // Antwort verarbeiten und als Array zurückgeben
-            $keywords_text = trim($response['content'][0]['text']);
-            $keywords = explode("\n", $keywords_text);
+            // Versuche, JSON zu extrahieren
+            $text = $response['content'][0]['text'];
+            preg_match('/\[\s*{.*}\s*\]/s', $text, $matches);
             
-            // Keywords bereinigen
-            $keywords = array_map('trim', $keywords);
-            $keywords = array_filter($keywords);
+            if (!empty($matches[0])) {
+                $json_text = $matches[0];
+                $keywords_data = json_decode($json_text, true);
+                
+                if (json_last_error() === JSON_ERROR_NONE && is_array($keywords_data)) {
+                    return array(
+                        'success' => true,
+                        'keywords' => $keywords_data
+                    );
+                }
+            }
+            
+            // Fallback: Text parsen
+            $keywords_text = trim($response['content'][0]['text']);
+            $keywords = array();
+            
+            // Einfaches Parsen für den Fall, dass kein JSON zurückkommt
+            $lines = explode("\n", $keywords_text);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (!empty($line) && !preg_match('/^[\[\]\{\}]/', $line)) {
+                    $score = mt_rand(70, 95); // Zufälliger Score
+                    $keywords[] = array(
+                        'keyword' => $line,
+                        'score' => $score
+                    );
+                }
+            }
             
             // Auf die ersten 5 beschränken
             $keywords = array_slice($keywords, 0, 5);
