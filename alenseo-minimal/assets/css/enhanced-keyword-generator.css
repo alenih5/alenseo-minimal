@@ -189,6 +189,15 @@
     font-weight: 500;
 }
 
+.alenseo-kw-score {
+    color: #666;
+    margin-left: 5px;
+}
+
+.alenseo-kw-select {
+    margin-left: auto !important;
+}
+
 .alenseo-error {
     color: #dc3232;
     margin: 8px 0;
@@ -246,6 +255,11 @@
     padding: 12px;
     background: #fff;
     font-size: 13px;
+}
+
+.alenseo-analysis-actions {
+    margin-top: 16px;
+    text-align: center;
 }
 
 /* Optimierungsvorschläge-Tab */
@@ -306,4 +320,15 @@
 
 .alenseo-suggestions-actions {
     margin-top: 16px;
+    text-align: center;
+}
+
+/* Animation für Spinner */
+@keyframes rotation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.dashicons-update {
+    animation: rotation 2s infinite linear;
 }
