@@ -1,0 +1,176 @@
+/* Styles für Keyword-Vorschläge im Dashboard */
+.alenseo-keyword-suggestions-container {
+    margin-top: 0;
+    margin-bottom: 8px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    background-color: #f6f7f7;
+    max-width: 100%;
+    width: 100%;
+}
+
+.alenseo-keyword-suggestions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #dcdcde;
+    background-color: #f0f0f1;
+}
+
+.alenseo-keyword-suggestions-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.alenseo-keyword-suggestions-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.alenseo-keyword-suggestion {
+    background-color: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    padding: 10px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.alenseo-keyword-suggestion:last-child {
+    margin-bottom: 0;
+}
+
+.alenseo-keyword-suggestion-content {
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.alenseo-keyword-suggestion-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #646970;
+}
+
+.alenseo-keyword-suggestion-score {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-keyword-suggestion-score .dashicons {
+    margin-right: 4px;
+    font-size: 16px;
+}
+
+.alenseo-keyword-suggestion-select {
+    background-color: #2271b1;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+}
+
+.alenseo-keyword-suggestion-select:hover {
+    background-color: #135e96;
+}
+
+.alenseo-keyword-suggestion-select .dashicons {
+    font-size: 14px;
+    margin-right: 4px;
+}
+
+.alenseo-keyword-suggestions-footer {
+    padding: 8px 12px;
+    border-top: 1px solid #dcdcde;
+    text-align: right;
+}
+
+.alenseo-keyword-suggestions-close {
+    background-color: #f0f0f1;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.alenseo-keyword-suggestions-close:hover {
+    background-color: #e5e5e5;
+}
+
+.alenseo-keyword-suggestions-loading,
+.alenseo-keyword-suggestions-error {
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.alenseo-keyword-suggestions-loading .dashicons {
+    font-size: 20px;
+    margin-right: 8px;
+}
+
+/* Spin-Animation für Ladeanzeige */
+.dashicons.spin {
+    animation: dashicons-spin 1s infinite;
+    animation-timing-function: linear;
+}
+
+@keyframes dashicons-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Styles für die Keyword-Eingabefelder */
+.alenseo-keyword-input {
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+.alenseo-keyword-save,
+.alenseo-keyword-generate {
+    background-color: #f0f0f1;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    padding: 4px;
+    cursor: pointer;
+    margin-right: 4px;
+}
+
+.alenseo-keyword-save:hover,
+.alenseo-keyword-generate:hover {
+    background-color: #e5e5e5;
+}
+
+.alenseo-keyword-edit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Styles für Keyword-Anzeige im Tabellenmodus */
+.alenseo-page-keyword {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-page-keyword .dashicons {
+    margin-right: 4px;
+    color: #646970;
+}

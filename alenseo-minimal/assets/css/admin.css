@@ -1,0 +1,14 @@
+/* Minimale CSS für Alenseo */
+.alenseo-loading {
+  text-align: center;
+  padding: 20px;
+}
+
+@keyframes rotation {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dashicons-update {
+  animation: rotation 2s infinite linear;
+}
