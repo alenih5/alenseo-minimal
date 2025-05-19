@@ -21,6 +21,41 @@ define('ALENSEO_MINIMAL_DIR', plugin_dir_path(__FILE__));
 define('ALENSEO_MINIMAL_URL', plugin_dir_url(__FILE__));
 define('ALENSEO_MINIMAL_VERSION', '1.0.0');
 
+// Erforderliche Dateien einbinden
+require_once ALENSEO_MINIMAL_DIR . 'includes/minimal-admin.php';
+require_once ALENSEO_MINIMAL_DIR . 'includes/class-minimal-analysis.php';
+require_once ALENSEO_MINIMAL_DIR . 'includes/class-dashboard.php';
+require_once ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php';
+require_once ALENSEO_MINIMAL_DIR . 'includes/class-content-optimizer.php';
+require_once ALENSEO_MINIMAL_DIR . 'includes/alenseo-ajax-handlers.php';
+require_once ALENSEO_MINIMAL_DIR . 'includes/alenseo-claude-ajax.php';
+require_once ALENSEO_MINIMAL_DIR . 'includes/alenseo-enhanced-ajax.php';
+
+// WPBakery-Integration nur laden, wenn WPBakery aktiv ist
+if (defined('WPB_VC_VERSION') || class_exists('WPBakeryVisualComposer')) {
+    require_once ALENSEO_MINIMAL_DIR . 'includes/class-wpbakery-integration.php';
+}
+
+// Hauptklassen initialisieren
+function alenseo_init() {
+    try {
+        // Admin-Bereich initialisieren
+        new Alenseo_Minimal_Admin();
+        
+        // Dashboard initialisieren
+        new Alenseo_Dashboard();
+        
+        // WPBakery-Integration initialisieren, wenn verfügbar
+        if (defined('WPB_VC_VERSION') || class_exists('WPBakeryVisualComposer')) {
+            require_once ALENSEO_MINIMAL_DIR . 'includes/class-wpbakery-integration.php';
+            new Alenseo_WPBakery_Integration();
+        }
+    } catch (Exception $e) {
+        error_log('Alenseo SEO Minimal - Initialisierungsfehler: ' . $e->getMessage());
+    }
+}
+add_action('plugins_loaded', 'alenseo_init');
+
 /**
  * Plugin aktivieren
  */
@@ -73,12 +108,9 @@ register_activation_hook(__FILE__, 'alenseo_minimal_activate');
  * Plugin deaktivieren
  */
 function alenseo_minimal_deactivate() {
-    // Hier könnten Aufräumaktionen stattfinden
-    
-    // Flush Rewrite Rules
-    flush_rewrite_rules();
-    
-    error_log("Alenseo SEO Minimal: Deaktivierung abgeschlossen");
+    // Aufräumarbeiten beim Deaktivieren
+    error_log("Alenseo SEO Minimal: Deaktivierung gestartet");
+    // Keine Daten löschen, nur Status loggen
 }
 register_deactivation_hook(__FILE__, 'alenseo_minimal_deactivate');
 
@@ -346,3 +378,7 @@ function alenseo_output_meta_tags() {
     }
 }
 add_action('wp_head', 'alenseo_output_meta_tags', 1);
+
+// Aktivierungs- und Deaktivierungshooks registrieren
+register_activation_hook(__FILE__, 'alenseo_minimal_activate');
+register_deactivation_hook(__FILE__, 'alenseo_minimal_deactivate');
