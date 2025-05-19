@@ -24,6 +24,9 @@ define('ALENSEO_MINIMAL_VERSION', '1.0.0');
  * Plugin aktivieren
  */
 function alenseo_minimal_activate() {
+    // Fehlerprotokollierung für Aktivierungsprobleme
+    error_log("Alenseo SEO Minimal: Aktivierung gestartet");
+    
     // Standardeinstellungen setzen, wenn noch keine vorhanden sind
     if (!get_option('alenseo_settings')) {
         $default_settings = array(
@@ -52,12 +55,16 @@ function alenseo_minimal_activate() {
     
     foreach ($directories as $directory) {
         if (!file_exists($directory)) {
-            wp_mkdir_p($directory);
+            if (!wp_mkdir_p($directory)) {
+                error_log("Alenseo SEO Minimal: Konnte Verzeichnis nicht erstellen: $directory");
+            }
         }
     }
     
     // Flush Rewrite Rules
     flush_rewrite_rules();
+    
+    error_log("Alenseo SEO Minimal: Aktivierung abgeschlossen");
 }
 register_activation_hook(__FILE__, 'alenseo_minimal_activate');
 
@@ -69,51 +76,87 @@ function alenseo_minimal_deactivate() {
     
     // Flush Rewrite Rules
     flush_rewrite_rules();
+    
+    error_log("Alenseo SEO Minimal: Deaktivierung abgeschlossen");
 }
 register_deactivation_hook(__FILE__, 'alenseo_minimal_deactivate');
+
+/**
+ * Fehlerprotokollierung
+ */
+function alenseo_log($message) {
+    if (WP_DEBUG === true) {
+        if (is_array($message) || is_object($message)) {
+            error_log(print_r($message, true));
+        } else {
+            error_log($message);
+        }
+    }
+}
 
 /**
  * Plugin initialisieren
  */
 function alenseo_minimal_init() {
-    // Sprachdateien laden
-    load_plugin_textdomain('alenseo', false, basename(dirname(__FILE__)) . '/languages');
-    
-    // Admin-Klasse laden und initialisieren, wenn im Admin-Bereich
-    if (is_admin()) {
-        require_once ALENSEO_MINIMAL_DIR . 'includes/minimal-admin.php';
-        $admin = new Alenseo_Minimal_Admin();
+    try {
+        // Sprachdateien laden
+        load_plugin_textdomain('alenseo', false, basename(dirname(__FILE__)) . '/languages');
         
-        // Claude API-Klasse laden, wenn die Datei existiert
-        if (file_exists(ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php')) {
-            require_once ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php';
-        }
-        
-        // WPBakery-Integration laden, wenn die Datei existiert
-        if (file_exists(ALENSEO_MINIMAL_DIR . 'includes/class-wpbakery-integration.php')) {
-            require_once ALENSEO_MINIMAL_DIR . 'includes/class-wpbakery-integration.php';
+        // Admin-Klasse laden und initialisieren, wenn im Admin-Bereich
+        if (is_admin()) {
+            $admin_file = ALENSEO_MINIMAL_DIR . 'includes/minimal-admin.php';
             
-            // WPBakery-Integration initialisieren, wenn WPBakery aktiv ist
-            if (defined('WPB_VC_VERSION') || class_exists('WPBakeryVisualComposer')) {
-                $wpbakery_integration = new Alenseo_WPBakery_Integration();
+            if (file_exists($admin_file)) {
+                require_once $admin_file;
+                $admin = new Alenseo_Minimal_Admin();
+                
+                // Claude API-Klasse laden, wenn die Datei existiert
+                $claude_api_file = ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php';
+                if (file_exists($claude_api_file)) {
+                    require_once $claude_api_file;
+                } else {
+                    alenseo_log("Alenseo SEO Minimal: Claude API-Datei nicht gefunden: $claude_api_file");
+                }
+                
+                // WPBakery-Integration laden, wenn die Datei existiert
+                $wpbakery_file = ALENSEO_MINIMAL_DIR . 'includes/class-wpbakery-integration.php';
+                if (file_exists($wpbakery_file)) {
+                    require_once $wpbakery_file;
+                    
+                    // WPBakery-Integration initialisieren, wenn WPBakery aktiv ist
+                    if (defined('WPB_VC_VERSION') || class_exists('WPBakeryVisualComposer')) {
+                        $wpbakery_integration = new Alenseo_WPBakery_Integration();
+                    }
+                }
+                
+                // AJAX-Handler laden
+                $ajax_handlers_file = ALENSEO_MINIMAL_DIR . 'includes/alenseo-ajax-handlers.php';
+                if (file_exists($ajax_handlers_file)) {
+                    require_once $ajax_handlers_file;
+                } else {
+                    alenseo_log("Alenseo SEO Minimal: AJAX-Handler-Datei nicht gefunden: $ajax_handlers_file");
+                }
+                
+                // Claude API AJAX-Handler laden, wenn die Datei existiert
+                $claude_ajax_file = ALENSEO_MINIMAL_DIR . 'includes/alenseo-claude-ajax.php';
+                if (file_exists($claude_ajax_file)) {
+                    require_once $claude_ajax_file;
+                }
+                
+                // Erweiterte AJAX-Handler laden, wenn die Datei existiert
+                $enhanced_ajax_file = ALENSEO_MINIMAL_DIR . 'includes/alenseo-enhanced-ajax.php';
+                if (file_exists($enhanced_ajax_file)) {
+                    require_once $enhanced_ajax_file;
+                }
+                
+                // Dashboard-Klasse beim Init-Hook registrieren
+                add_action('init', 'alenseo_register_dashboard');
+            } else {
+                alenseo_log("Alenseo SEO Minimal: Admin-Datei nicht gefunden: $admin_file");
             }
         }
-        
-        // AJAX-Handler laden
-        require_once ALENSEO_MINIMAL_DIR . 'includes/alenseo-ajax-handlers.php';
-        
-        // Claude API AJAX-Handler laden, wenn die Datei existiert
-        if (file_exists(ALENSEO_MINIMAL_DIR . 'includes/alenseo-claude-ajax.php')) {
-            require_once ALENSEO_MINIMAL_DIR . 'includes/alenseo-claude-ajax.php';
-        }
-        
-        // Erweiterte AJAX-Handler laden, wenn die Datei existiert
-        if (file_exists(ALENSEO_MINIMAL_DIR . 'includes/alenseo-enhanced-ajax.php')) {
-            require_once ALENSEO_MINIMAL_DIR . 'includes/alenseo-enhanced-ajax.php';
-        }
-        
-        // Dashboard-Klasse registrieren
-        add_action('admin_init', 'alenseo_register_dashboard');
+    } catch (Exception $e) {
+        alenseo_log("Alenseo SEO Minimal Fehler bei der Initialisierung: " . $e->getMessage());
     }
 }
 add_action('plugins_loaded', 'alenseo_minimal_init');
@@ -122,10 +165,29 @@ add_action('plugins_loaded', 'alenseo_minimal_init');
  * Dashboard-Klasse registrieren
  */
 function alenseo_register_dashboard() {
-    // Nur registrieren, wenn die Datei existiert
-    if (file_exists(ALENSEO_MINIMAL_DIR . 'includes/class-dashboard.php')) {
-        require_once ALENSEO_MINIMAL_DIR . 'includes/class-dashboard.php';
-        $dashboard = new Alenseo_Dashboard();
+    // Prüfen, ob wir im Admin-Bereich sind
+    if (!is_admin()) {
+        return;
+    }
+    
+    try {
+        // Nur registrieren, wenn die Datei existiert
+        $dashboard_file = ALENSEO_MINIMAL_DIR . 'includes/class-dashboard.php';
+        if (file_exists($dashboard_file)) {
+            require_once $dashboard_file;
+            
+            // Prüfen, ob die Klasse existiert, bevor eine Instanz erstellt wird
+            if (class_exists('Alenseo_Dashboard')) {
+                $dashboard = new Alenseo_Dashboard();
+                alenseo_log("Alenseo SEO Minimal: Dashboard erfolgreich initialisiert");
+            } else {
+                alenseo_log("Alenseo SEO Minimal: Dashboard-Klasse existiert nicht, obwohl die Datei geladen wurde: $dashboard_file");
+            }
+        } else {
+            alenseo_log("Alenseo SEO Minimal: Dashboard-Datei nicht gefunden: $dashboard_file");
+        }
+    } catch (Exception $e) {
+        alenseo_log("Alenseo SEO Minimal Fehler bei der Dashboard-Registrierung: " . $e->getMessage());
     }
 }
 
@@ -138,22 +200,30 @@ function alenseo_minimal_admin_enqueue_scripts() {
         return;
     }
     
-    // Admin CSS
-    wp_enqueue_style(
-        'alenseo-admin-css',
-        ALENSEO_MINIMAL_URL . 'assets/css/admin.css',
-        array(),
-        ALENSEO_MINIMAL_VERSION
-    );
-    
-    // Admin JS
-    wp_enqueue_script(
-        'alenseo-admin-js',
-        ALENSEO_MINIMAL_URL . 'assets/js/admin.js',
-        array('jquery'),
-        ALENSEO_MINIMAL_VERSION,
-        true
-    );
+    try {
+        // Admin CSS
+        if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/admin.css')) {
+            wp_enqueue_style(
+                'alenseo-admin-css',
+                ALENSEO_MINIMAL_URL . 'assets/css/admin.css',
+                array(),
+                ALENSEO_MINIMAL_VERSION
+            );
+        }
+        
+        // Admin JS
+        if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/js/admin.js')) {
+            wp_enqueue_script(
+                'alenseo-admin-js',
+                ALENSEO_MINIMAL_URL . 'assets/js/admin.js',
+                array('jquery'),
+                ALENSEO_MINIMAL_VERSION,
+                true
+            );
+        }
+    } catch (Exception $e) {
+        alenseo_log("Alenseo SEO Minimal Fehler beim Laden der Admin-Assets: " . $e->getMessage());
+    }
 }
 add_action('admin_enqueue_scripts', 'alenseo_minimal_admin_enqueue_scripts');
 
