@@ -126,9 +126,9 @@ function alenseo_claude_get_enhanced_optimization_suggestions() {
 add_action('wp_ajax_alenseo_claude_get_enhanced_optimization_suggestions', 'alenseo_claude_get_enhanced_optimization_suggestions');
 
 /**
- * AJAX-Handler für Keyword-Generierung von Claude
+ * AJAX-Handler für erweiterte Keyword-Generierung von Claude
  */
-function alenseo_claude_generate_keywords() {
+function alenseo_claude_generate_enhanced_keywords() {
     // Nonce prüfen
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'alenseo_ajax_nonce')) {
         wp_send_json_error(array('message' => 'Sicherheitsüberprüfung fehlgeschlagen.'));
@@ -213,7 +213,7 @@ Formatiere deine Antwort als eine einfache, durch Kommas getrennte Liste der 5 K
         wp_send_json_error(array('message' => 'Fehler bei der Generierung von Keywords: ' . $e->getMessage()));
     }
 }
-add_action('wp_ajax_alenseo_claude_generate_keywords', 'alenseo_claude_generate_keywords');
+add_action('wp_ajax_alenseo_claude_generate_enhanced_keywords', 'alenseo_claude_generate_enhanced_keywords');
 
 /**
  * AJAX-Handler zum Speichern eines Keywords

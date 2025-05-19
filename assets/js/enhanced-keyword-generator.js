@@ -49,7 +49,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'alenseo_claude_generate_keywords',
+                action: 'alenseo_claude_generate_enhanced_keywords',
                 post_id: postId,
                 nonce: alenseoData.nonce
             },

@@ -4,8 +4,12 @@
  * Plugin URI: https://www.imponi.ch
  * Description: Ein schlankes SEO-Plugin mit Claude AI-Integration für WordPress
  * Version: 1.0.0
+ * Requires at least: 5.8
+ * Requires PHP: 7.4
  * Author: Alen
  * Author URI: https://www.imponi.ch
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Company: Imponi Bern-Worb GmbH
  * Text Domain: alenseo
  * Domain Path: /languages

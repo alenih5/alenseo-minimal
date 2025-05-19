@@ -1,0 +1,33 @@
+# Copyright (C) 2025 Alen
+# This file is distributed under the same license as the Alenseo SEO Minimal plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Alenseo SEO Minimal 1.0.0\n"
+"Report-Msgid-Bugs-To: https://www.imponi.ch\n"
+"POT-Creation-Date: 2025-05-19\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: alenseo-minimal.php:385
+msgid "Einstellungen"
+msgstr ""
+
+#: alenseo-minimal.php:386
+msgid "SEO-Optimierung"
+msgstr ""
+
+#: includes/minimal-admin.php:45
+msgid "Optimiere Inhalt..."
+msgstr ""
+
+#: includes/minimal-admin.php:46
+msgid "Optimierung erfolgreich!"
+msgstr ""
+
+#: includes/minimal-admin.php:47
+msgid "Fehler bei der Optimierung. Bitte versuche es erneut."
+msgstr ""
