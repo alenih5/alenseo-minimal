@@ -1,8 +1,9 @@
 <?php
 /**
- * Claude API Klasse für Alenseo SEO
- *
- * @link       https://imponi.ch
+ * Beispiel für eine Claude API-Klasse
+ * Diese Klasse ist verantwortlich für die Kommunikation mit der Claude AI API
+ * 
+ * @link       https://www.imponi.ch
  * @since      1.0.0
  *
  * @package    Alenseo
@@ -15,409 +16,207 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Die Claude API Klasse für das Alenseo SEO Plugin
+ * Die Claude API-Klasse
  */
 class Alenseo_Claude_API {
-
+    
     /**
-     * API-Schlüssel für Claude API
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $api_key    Der API-Schlüssel für die Claude API.
+     * Der API-Schlüssel
+     * 
+     * @var string
      */
     private $api_key;
-
+    
     /**
-     * API-Endpunkt für Claude API
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $api_endpoint    Der API-Endpunkt für die Claude API.
+     * Das zu verwendende Modell
+     * 
+     * @var string
      */
-    private $api_endpoint = 'https://api.anthropic.com/v1/messages';
-
+    private $model;
+    
     /**
-     * API-Version für Claude API
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $api_version    Die API-Version für die Claude API.
+     * Basis-URL für die Claude API
+     * 
+     * @var string
      */
-    private $api_version = '2023-06-01';
-
+    private $api_url = 'https://api.anthropic.com/v1/messages';
+    
     /**
-     * Claude-Modell
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $model    Das verwendete Claude-Modell.
-     */
-    private $model = 'claude-3-haiku-20240307';
-
-    /**
-     * Plugin-Einstellungen
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      array    $settings    Die Plugin-Einstellungen.
-     */
-    private $settings;
-
-    /**
-     * Konstruktor
-     *
-     * @since    1.0.0
+     * Initialisierung der Klasse
      */
     public function __construct() {
-        // Debug-Log
-        error_log("Alenseo Claude API: Konstruktor aufgerufen");
+        // Einstellungen aus der Datenbank abrufen
+        $settings = get_option('alenseo_settings', array());
         
-        // Einstellungen laden
-        $this->settings = get_option('alenseo_settings', array());
+        // API-Schlüssel setzen (falls vorhanden)
+        $this->api_key = isset($settings['claude_api_key']) ? $settings['claude_api_key'] : '';
         
-        // API-Schlüssel aus den Einstellungen holen
-        $this->api_key = isset($this->settings['claude_api_key']) ? $this->settings['claude_api_key'] : '';
-        
-        // Modell aus den Einstellungen holen (falls gesetzt)
-        if (isset($this->settings['claude_model']) && !empty($this->settings['claude_model'])) {
-            $this->model = $this->settings['claude_model'];
-        }
-        
-        error_log("Alenseo Claude API: Konstruktor abgeschlossen");
+        // Modell setzen
+        $this->model = isset($settings['claude_model']) ? $settings['claude_model'] : 'claude-3-haiku-20240307';
     }
-
+    
     /**
-     * API-Status prüfen
+     * Text mit Claude AI generieren
      * 
-     * @since    1.0.0
-     * @return   bool     True wenn API aktiv ist, False wenn nicht
+     * @param string $prompt   Der Prompt für Claude
+     * @param array  $options  Zusätzliche Optionen für die API
+     * @return string|WP_Error Der generierte Text oder ein Fehler
      */
-    public function is_active() {
-        return !empty($this->api_key);
-    }
-
-    /**
-     * API-Schlüssel prüfen
-     * 
-     * @since    1.0.0
-     * @return   array    Ergebnis der API-Test-Anfrage
-     */
-    public function test_api_key() {
-        error_log("Alenseo Claude API: Test API-Schlüssel");
-        
+    public function generate_text($prompt, $options = array()) {
+        // API-Schlüssel prüfen
         if (empty($this->api_key)) {
-            return array(
-                'success' => false,
-                'message' => __('API-Schlüssel ist leer.', 'alenseo')
-            );
+            return new WP_Error('missing_api_key', 'Claude API-Schlüssel ist nicht konfiguriert.');
         }
         
-        $prompt = "Dies ist ein Test der Claude API. Bitte antworte nur mit 'API-Test erfolgreich'.";
-        
-        $response = $this->send_request($prompt);
-        
-        if (is_wp_error($response)) {
-            return array(
-                'success' => false,
-                'message' => $response->get_error_message()
-            );
-        }
-        
-        // Antwort auf Erfolg prüfen
-        if (isset($response['content'][0]['text']) && strpos($response['content'][0]['text'], 'API-Test erfolgreich') !== false) {
-            return array(
-                'success' => true,
-                'message' => __('API-Verbindung erfolgreich hergestellt.', 'alenseo'),
-                'model' => $response['model'] ?? $this->model
-            );
-        } else {
-            return array(
-                'success' => false,
-                'message' => __('Unerwartete Antwort von der API.', 'alenseo'),
-                'response' => $response
-            );
-        }
-    }
-
-    /**
-     * Anfrage an die Claude API senden
-     * 
-     * @since    1.0.0
-     * @param    string    $prompt     Der Eingabetext für die Anfrage
-     * @param    float     $temperature Optional. Temperatur für das Modell (0.0-1.0)
-     * @param    int       $max_tokens  Optional. Maximale Anzahl an Tokens in der Antwort
-     * @return   array|WP_Error        Antwort der API oder WP_Error bei Fehler
-     */
-    public function send_request($prompt, $temperature = 0.7, $max_tokens = 1000) {
-        if (empty($this->api_key)) {
-            return new WP_Error('api_error', __('API-Schlüssel ist nicht konfiguriert.', 'alenseo'));
-        }
-        
-        $headers = array(
-            'Content-Type'  => 'application/json',
-            'x-api-key'     => $this->api_key,
-            'anthropic-version' => $this->api_version
+        // Standardoptionen setzen
+        $defaults = array(
+            'max_tokens' => 1000,
+            'temperature' => 0.7,
+            'system' => 'Du bist ein SEO-Experte, der bei der Optimierung von Webseiten hilft.'
         );
         
-        $body = array(
-            'model'       => $this->model,
-            'messages'    => array(
+        // Optionen mit Default-Werten zusammenführen
+        $options = wp_parse_args($options, $defaults);
+        
+        // API-Anfrage vorbereiten
+        $request_data = array(
+            'model' => $this->model,
+            'messages' => array(
                 array(
                     'role' => 'user',
                     'content' => $prompt
                 )
             ),
-            'temperature' => $temperature,
-            'max_tokens'  => $max_tokens
+            'max_tokens' => $options['max_tokens'],
+            'temperature' => $options['temperature'],
+            'system' => $options['system']
         );
         
-        $response = wp_remote_post($this->api_endpoint, array(
-            'headers' => $headers,
-            'body'    => json_encode($body),
-            'timeout' => 30 // Längeres Timeout für API-Anfragen
+        // API-Anfrage senden
+        $response = wp_remote_post($this->api_url, array(
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'x-api-key' => $this->api_key,
+                'anthropic-version' => '2023-06-01'
+            ),
+            'body' => json_encode($request_data),
+            'timeout' => 60 // Längeres Timeout für die API-Antwort
         ));
         
+        // Fehler prüfen
         if (is_wp_error($response)) {
-            error_log("Alenseo Claude API Fehler: " . $response->get_error_message());
             return $response;
         }
         
-        $response_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        
-        if ($response_code !== 200) {
-            error_log("Alenseo Claude API HTTP-Fehler: " . $response_code . " - " . $response_body);
-            return new WP_Error(
-                'api_error',
-                sprintf(__('API-Fehler: %s - %s', 'alenseo'), $response_code, $response_body)
-            );
+        // HTTP-Statuscode prüfen
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code !== 200) {
+            $body = wp_remote_retrieve_body($response);
+            $error_data = json_decode($body, true);
+            $error_message = isset($error_data['error']['message']) ? $error_data['error']['message'] : 'Unbekannter API-Fehler.';
+            
+            return new WP_Error('api_error', $error_message, array('status' => $status_code));
         }
         
-        $data = json_decode($response_body, true);
+        // Antwort verarbeiten
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
         
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log("Alenseo Claude API JSON-Fehler: " . json_last_error_msg());
-            return new WP_Error('json_error', __('Fehler beim Parsen der API-Antwort.', 'alenseo'));
+        // Antworttext extrahieren
+        if (isset($data['content'][0]['text'])) {
+            return $data['content'][0]['text'];
         }
         
-        return $data;
+        return new WP_Error('parsing_error', 'Die API-Antwort konnte nicht verarbeitet werden.');
     }
-
+    
     /**
-     * Generiere Keywords für einen Beitrag
+     * API-Schlüssel testen
      * 
-     * @since    1.0.0
-     * @param    int       $post_id    ID des Beitrags
-     * @return   array     Array mit generierten Keywords oder Fehler
+     * @return bool|WP_Error true bei Erfolg, sonst ein Fehler
      */
-    public function generate_keywords($post_id) {
-        error_log("Alenseo Claude API: Generiere Keywords für Post ID " . $post_id);
-        
-        $post = get_post($post_id);
-        
-        if (!$post) {
-            return array(
-                'success' => false,
-                'message' => __('Beitrag nicht gefunden.', 'alenseo')
-            );
+    public function test_api_key() {
+        // API-Schlüssel prüfen
+        if (empty($this->api_key)) {
+            return new WP_Error('missing_api_key', 'Claude API-Schlüssel ist nicht konfiguriert.');
         }
         
-        // Inhalt vorbereiten
-        $title = $post->post_title;
-        $content = wp_strip_all_tags($post->post_content);
+        // Einfachen Test-Prompt senden
+        $test_prompt = 'Bitte antworte mit dem Wort "erfolgreich", wenn du diese Nachricht erhältst.';
         
-        // Auf maximale Länge begrenzen (Claude hat Tokenlimits)
-        if (strlen($content) > 4000) {
-            $content = substr($content, 0, 4000) . '...';
-        }
+        // Optionen mit kleinem Token-Limit
+        $options = array(
+            'max_tokens' => 50,
+            'temperature' => 0
+        );
         
-        // Prompt für die API erstellen
-        $prompt = "Analysiere den folgenden Text und extrahiere die 5 wichtigsten Keywords oder Schlüsselbegriffe, die für SEO relevant sind. Formatiere deine Antwort als JSON-Array mit Objekten, die jeweils 'keyword' und 'score' (0-100) enthalten.
+        // Text generieren
+        $response = $this->generate_text($test_prompt, $options);
         
-        Titel: $title
-        
-        Inhalt: $content";
-        
-        $response = $this->send_request($prompt, 0.3, 500); // Niedrige Temperatur für konsistentere Ergebnisse
-        
+        // Fehler prüfen
         if (is_wp_error($response)) {
-            return array(
-                'success' => false,
-                'message' => $response->get_error_message()
-            );
+            return $response;
         }
         
-        if (isset($response['content'][0]['text'])) {
-            // Versuche, JSON zu extrahieren
-            $text = $response['content'][0]['text'];
-            preg_match('/\[\s*{.*}\s*\]/s', $text, $matches);
-            
-            if (!empty($matches[0])) {
-                $json_text = $matches[0];
-                $keywords_data = json_decode($json_text, true);
-                
-                if (json_last_error() === JSON_ERROR_NONE && is_array($keywords_data)) {
-                    return array(
-                        'success' => true,
-                        'keywords' => $keywords_data
-                    );
-                }
-            }
-            
-            // Fallback: Text parsen
-            $keywords_text = trim($response['content'][0]['text']);
-            $keywords = array();
-            
-            // Einfaches Parsen für den Fall, dass kein JSON zurückkommt
-            $lines = explode("\n", $keywords_text);
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if (!empty($line) && !preg_match('/^[\[\]\{\}]/', $line)) {
-                    $score = mt_rand(70, 95); // Zufälliger Score
-                    $keywords[] = array(
-                        'keyword' => $line,
-                        'score' => $score
-                    );
-                }
-            }
-            
-            // Auf die ersten 5 beschränken
-            $keywords = array_slice($keywords, 0, 5);
-            
-            return array(
-                'success' => true,
-                'keywords' => $keywords
-            );
-        } else {
-            return array(
-                'success' => false,
-                'message' => __('Keine Keywords gefunden.', 'alenseo')
-            );
+        // Erfolg prüfen
+        if (stripos($response, 'erfolgreich') !== false) {
+            return true;
         }
+        
+        return new WP_Error('unexpected_response', 'Die API-Antwort war unerwartet: ' . $response);
     }
-
+    
     /**
-     * Erstelle SEO-Optimierungsvorschläge für einen Beitrag
+     * API-Schlüssel und Modell aktualisieren
      * 
-     * @since    1.0.0
-     * @param    int       $post_id       ID des Beitrags
-     * @param    string    $focus_keyword Fokus-Keyword für die Optimierung
-     * @return   array     Array mit Optimierungsvorschlägen oder Fehler
+     * @param string $api_key Der neue API-Schlüssel
+     * @param string $model   Das neue Modell
+     * @return bool           true bei Erfolg, sonst false
      */
-    public function get_optimization_suggestions($post_id, $focus_keyword) {
-        error_log("Alenseo Claude API: Erstelle Optimierungsvorschläge für Post ID " . $post_id);
+    public function update_api_settings($api_key, $model) {
+        // Einstellungen aus der Datenbank abrufen
+        $settings = get_option('alenseo_settings', array());
         
-        $post = get_post($post_id);
+        // API-Schlüssel und Modell aktualisieren
+        $settings['claude_api_key'] = $api_key;
+        $settings['claude_model'] = $model;
         
-        if (!$post) {
-            return array(
-                'success' => false,
-                'message' => __('Beitrag nicht gefunden.', 'alenseo')
-            );
-        }
+        // Eigene Eigenschaften aktualisieren
+        $this->api_key = $api_key;
+        $this->model = $model;
         
-        if (empty($focus_keyword)) {
-            return array(
-                'success' => false,
-                'message' => __('Kein Fokus-Keyword angegeben.', 'alenseo')
-            );
-        }
-        
-        // Inhalt vorbereiten
-        $title = $post->post_title;
-        $content = wp_strip_all_tags($post->post_content);
-        $excerpt = $post->post_excerpt;
-        
-        // Auf maximale Länge begrenzen
-        if (strlen($content) > 4000) {
-            $content = substr($content, 0, 4000) . '...';
-        }
-        
-        // Meta-Beschreibung abrufen
-        $meta_description = get_post_meta($post_id, '_yoast_wpseo_metadesc', true);
-        if (empty($meta_description)) {
-            $meta_description = get_post_meta($post_id, '_aioseo_description', true); // Alternative SEO Plugin
-        }
-        if (empty($meta_description)) {
-            $meta_description = $excerpt;
-        }
-        
-        // Prompt für die API erstellen
-        $prompt = "Du bist ein SEO-Experte. Analysiere den folgenden Beitrag und erstelle spezifische Optimierungsvorschläge, um ihn für das Fokus-Keyword zu optimieren.
-        
-        Fokus-Keyword: $focus_keyword
-        
-        Titel: $title
-        
-        Meta-Beschreibung: $meta_description
-        
-        Inhalt: $content
-        
-        Gib deine Analyse in folgendem Format zurück:
-        
-        TITEL: [Vorschlag für optimierten Titel]
-        
-        META-BESCHREIBUNG: [Vorschlag für optimierte Meta-Beschreibung]
-        
-        INHALT-OPTIMIERUNGEN:
-        1. [Erster Vorschlag]
-        2. [Zweiter Vorschlag]
-        3. [Dritter Vorschlag]
-        
-        Die Vorschläge sollten konkret und umsetzbar sein.";
-        
-        $response = $this->send_request($prompt, 0.7, 1500);
-        
-        if (is_wp_error($response)) {
-            return array(
-                'success' => false,
-                'message' => $response->get_error_message()
-            );
-        }
-        
-        if (isset($response['content'][0]['text'])) {
-            $suggestions_text = $response['content'][0]['text'];
-            
-            // Extrahiere die vorgeschlagenen Änderungen
-            $title_match = preg_match('/TITEL:\s*(.+?)(?=META-BESCHREIBUNG:|$)/s', $suggestions_text, $title_matches);
-            $meta_match = preg_match('/META-BESCHREIBUNG:\s*(.+?)(?=INHALT-OPTIMIERUNGEN:|$)/s', $suggestions_text, $meta_matches);
-            $content_match = preg_match('/INHALT-OPTIMIERUNGEN:\s*(.+?)$/s', $suggestions_text, $content_matches);
-            
-            $suggestions = array();
-            
-            if ($title_match && !empty(trim($title_matches[1]))) {
-                $suggestions['title'] = trim($title_matches[1]);
-            }
-            
-            if ($meta_match && !empty(trim($meta_matches[1]))) {
-                $suggestions['meta_description'] = trim($meta_matches[1]);
-            }
-            
-            if ($content_match && !empty(trim($content_matches[1]))) {
-                // Einzelne Punkte extrahieren
-                $content_suggestions = array();
-                $lines = explode("\n", trim($content_matches[1]));
-                foreach ($lines as $line) {
-                    $line = trim($line);
-                    if (preg_match('/^\d+\.\s+(.+)$/', $line, $point_match)) {
-                        $content_suggestions[] = $point_match[1];
-                    } elseif (!empty($line)) {
-                        $content_suggestions[] = $line;
-                    }
-                }
-                $suggestions['content'] = $content_suggestions;
-            }
-            
-            return array(
-                'success' => true,
-                'suggestions' => $suggestions
-            );
-        } else {
-            return array(
-                'success' => false,
-                'message' => __('Keine Optimierungsvorschläge gefunden.', 'alenseo')
-            );
-        }
+        // Einstellungen speichern
+        return update_option('alenseo_settings', $settings);
+    }
+    
+    /**
+     * Prüfen, ob die API konfiguriert ist
+     * 
+     * @return bool true wenn konfiguriert, sonst false
+     */
+    public function is_api_configured() {
+        return !empty($this->api_key);
+    }
+    
+    /**
+     * Aktuelles Modell abrufen
+     * 
+     * @return string Das aktuelle Modell
+     */
+    public function get_model() {
+        return $this->model;
+    }
+    
+    /**
+     * Verfügbare Modelle abrufen
+     * 
+     * @return array Liste der verfügbaren Modelle
+     */
+    public function get_available_models() {
+        return array(
+            'claude-3-opus-20240229' => 'Claude 3 Opus',
+            'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
+            'claude-3-haiku-20240307' => 'Claude 3 Haiku'
+        );
     }
 }
