@@ -1,36 +1,28 @@
 /**
+ * JavaScript für das Dashboard
+ *
+ * @link       https://www.imponi.ch
+ * @since      1.0.0
+ *
+ * @package    Alenseo
+ */
 
-JavaScript für das Dashboard
-@link https://www.imponi.ch
-@since 1.0.0
-@package Alenseo */
-(function($) { 'use strict';
-
-// Hauptfunktionalität des Dashboards
-var AlensenDashboard = {
-    /**
-     * Initialisierung
-     */
-    init: function() {
-        this.setupTableActions();
-        this.setupBulkActions();
-    },
+jQuery(document).ready(function($) {
+    'use strict';
     
     /**
      * Tabellen-Aktionen einrichten
      */
-    setupTableActions: function() {
-        var self = this;
-        
+    function setupTableActions() {
         // Checkbox-Funktion für "Alle auswählen"
         $('#alenseo-select-all').on('change', function() {
             $('.alenseo-select-post').prop('checked', $(this).prop('checked'));
-            self.updateBulkActionButton();
+            updateBulkActionButton();
         });
         
         // Checkbox-Änderung
         $('.alenseo-select-post').on('change', function() {
-            self.updateBulkActionButton();
+            updateBulkActionButton();
         });
         
         // Filtern
@@ -88,7 +80,7 @@ var AlensenDashboard = {
             });
         });
         
-        // Keyword-Dialog-Handler
+        // Keyword-Button-Handler
         $('.alenseo-keyword-button').on('click', function() {
             var postId = $(this).data('post-id');
             var postTitle = $(this).closest('tr').find('.alenseo-post-title').text();
@@ -99,7 +91,7 @@ var AlensenDashboard = {
             }
             
             // Dialog öffnen
-            self.openKeywordDialog(postId, postTitle, currentKeyword);
+            openKeywordDialog(postId, postTitle, currentKeyword);
         });
         
         // Detailansicht-Link
@@ -117,14 +109,12 @@ var AlensenDashboard = {
             // Neues Fenster/Tab öffnen
             window.open(url, '_blank');
         });
-    },
+    }
     
     /**
      * Massenaktionen einrichten
      */
-    setupBulkActions: function() {
-        var self = this;
-        
+    function setupBulkActions() {
         // Massenaktionen-Button
         $('#alenseo-bulk-action-apply').on('click', function() {
             var action = $('#alenseo-bulk-action').val();
@@ -142,10 +132,10 @@ var AlensenDashboard = {
             
             switch (action) {
                 case 'analyze':
-                    self.bulkAnalyze(selectedPosts);
+                    bulkAnalyze(selectedPosts);
                     break;
                 case 'set_keyword':
-                    self.bulkSetKeyword(selectedPosts);
+                    bulkSetKeyword(selectedPosts);
                     break;
                 case 'optimize':
                     alert('Die Massenoptimierung ist in dieser Version noch nicht verfügbar.');
@@ -154,12 +144,12 @@ var AlensenDashboard = {
                     alert('Bitte wähle eine Aktion aus.');
             }
         });
-    },
+    }
     
     /**
      * Update des Massenaktionen-Buttons
      */
-    updateBulkActionButton: function() {
+    function updateBulkActionButton() {
         var selectedCount = $('.alenseo-select-post:checked').length;
         var button = $('#alenseo-bulk-action-apply');
         
@@ -170,13 +160,14 @@ var AlensenDashboard = {
             button.text('Anwenden');
             button.prop('disabled', true);
         }
-    },
+    }
     
     /**
      * Massenanalyse durchführen
+     *
+     * @param {Array} postIds Array mit Post-IDs
      */
-    bulkAnalyze: function(postIds) {
-        var self = this;
+    function bulkAnalyze(postIds) {
         var button = $('#alenseo-bulk-action-apply');
         var originalButtonText = button.text();
         
@@ -251,14 +242,16 @@ var AlensenDashboard = {
         
         // Analyse starten
         analyzeNext();
-    },
+    }
     
     /**
      * Keyword-Dialog öffnen
+     *
+     * @param {number} postId    Die Post-ID
+     * @param {string} postTitle Der Titel des Posts
+     * @param {string} currentKeyword Das aktuelle Keyword
      */
-    openKeywordDialog: function(postId, postTitle, currentKeyword) {
-        var self = this;
-        
+    function openKeywordDialog(postId, postTitle, currentKeyword) {
         // Dialog erstellen, falls noch nicht vorhanden
         if ($('#alenseo-keyword-dialog').length === 0) {
             var dialogHtml = 
@@ -400,6 +393,20 @@ var AlensenDashboard = {
                     }
                 });
             });
+            
+            // ESC-Taste zum Schließen
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    $('#alenseo-keyword-dialog').hide();
+                }
+            });
+            
+            // Klick außerhalb des Dialogs zum Schließen
+            $(document).on('click', '.alenseo-dialog', function(e) {
+                if ($(e.target).hasClass('alenseo-dialog')) {
+                    $(this).hide();
+                }
+            });
         }
         
         // Dialog mit Daten füllen und anzeigen
@@ -410,20 +417,26 @@ var AlensenDashboard = {
         dialog.find('.alenseo-keyword-suggestions').hide();
         dialog.find('.alenseo-keyword-list').empty();
         dialog.show();
-    },
+    }
     
     /**
-     * Keywords für mehrere Posts setzen
+     * Keywords für mehrere Posts setzen (nicht implementiert)
+     *
+     * @param {Array} postIds Array mit Post-IDs
      */
-    bulkSetKeyword: function(postIds) {
+    function bulkSetKeyword(postIds) {
         // In dieser Version nicht implementiert
         alert('Die Massen-Keyword-Setzung ist in dieser Version noch nicht verfügbar.');
     }
-};
-
-// Initialisierung beim Laden des Dokuments
-$(document).ready(function() {
-    AlensenDashboard.init();
+    
+    /**
+     * Initialisierung aller Funktionen
+     */
+    function init() {
+        setupTableActions();
+        setupBulkActions();
+    }
+    
+    // Initialisierung starten
+    init();
 });
-})(jQuery);
-
