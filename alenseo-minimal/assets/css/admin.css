@@ -1,14 +1,353 @@
-/* Minimale CSS für Alenseo */
-.alenseo-loading {
-  text-align: center;
-  padding: 20px;
+/**
+ * Admin.css für das Alenseo SEO Plugin
+ */
+
+/* Basisstile */
+.alenseo-wrap {
+    margin: 20px 0;
 }
 
-@keyframes rotation {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.alenseo-wrap h1 {
+    margin-bottom: 20px;
 }
 
-.dashicons-update {
-  animation: rotation 2s infinite linear;
+/* Allgemeine Komponenten */
+.alenseo-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 3px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    position: relative;
+}
+
+.alenseo-card-header {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.alenseo-card-header h2, 
+.alenseo-card-header h3 {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.alenseo-card-body {
+    padding: 15px;
+}
+
+.alenseo-card-footer {
+    padding: 15px;
+    border-top: 1px solid #f0f0f0;
+    background: #f9f9f9;
+}
+
+/* Meta-Box-Stile */
+.alenseo-meta-box {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.alenseo-meta-box-header {
+    padding: 12px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #e2e4e7;
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-score-container {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-score-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    margin-right: 10px;
+    color: white;
+    background-color: #ccc;
+}
+
+.alenseo-score-circle.poor {
+    background-color: #dc3232;
+}
+
+.alenseo-score-circle.ok {
+    background-color: #ffb900;
+}
+
+.alenseo-score-circle.good {
+    background-color: #46b450;
+}
+
+.alenseo-score-circle.unknown {
+    background-color: #72777c;
+}
+
+.alenseo-score-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.alenseo-score-label .status-poor {
+    color: #dc3232;
+}
+
+.alenseo-score-label .status-ok {
+    color: #ffb900;
+}
+
+.alenseo-score-label .status-good {
+    color: #46b450;
+}
+
+.alenseo-meta-box-content {
+    padding: 12px;
+}
+
+/* Analyse-Stile */
+.alenseo-analysis-item {
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.alenseo-analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f9f9f9;
+    font-weight: 600;
+}
+
+.alenseo-analysis-header.poor {
+    background-color: #fbeaea;
+    border-bottom: 1px solid #dc3232;
+}
+
+.alenseo-analysis-header.ok {
+    background-color: #fff8e5;
+    border-bottom: 1px solid #ffb900;
+}
+
+.alenseo-analysis-header.good {
+    background-color: #eaf9eb;
+    border-bottom: 1px solid #46b450;
+}
+
+.alenseo-analysis-header.unknown {
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
+.alenseo-analysis-score {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #ddd;
+}
+
+.alenseo-analysis-message {
+    padding: 12px;
+    background: #fff;
+    font-size: 13px;
+}
+
+/* Einstellungsseite */
+.alenseo-settings-container {
+    max-width: 900px;
+    margin-top: 20px;
+}
+
+.alenseo-settings-tabs {
+    display: flex;
+    margin-bottom: 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.alenseo-settings-tab {
+    padding: 10px 15px;
+    background: #f1f1f1;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.alenseo-settings-tab.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+}
+
+.alenseo-settings-content {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-top: none;
+    padding: 20px;
+}
+
+.alenseo-settings-section {
+    display: none;
+}
+
+.alenseo-settings-section.active {
+    display: block;
+}
+
+/* Notice-Stile */
+.alenseo-notice {
+    padding: 12px;
+    background: #f9f9f9;
+    border-left: 4px solid #007cba;
+    margin-bottom: 15px;
+}
+
+.alenseo-notice p {
+    margin: 0;
+}
+
+.alenseo-notice.info {
+    border-left-color: #007cba;
+}
+
+.alenseo-notice.success {
+    border-left-color: #46b450;
+}
+
+.alenseo-notice.warning {
+    border-left-color: #ffb900;
+}
+
+.alenseo-notice.error {
+    border-left-color: #dc3232;
+}
+
+/* Formularkomponenten */
+.alenseo-field {
+    margin-bottom: 15px;
+}
+
+.alenseo-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.alenseo-field input[type="text"],
+.alenseo-field input[type="password"],
+.alenseo-field input[type="email"],
+.alenseo-field select,
+.alenseo-field textarea {
+    width: 100%;
+    max-width: 400px;
+}
+
+.alenseo-field .description {
+    color: #666;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.alenseo-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.alenseo-checkbox-grid label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+}
+
+.alenseo-checkbox-grid input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Status-Indikatoren */
+.alenseo-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.alenseo-status-good {
+    background-color: #eaf9eb;
+    color: #46b450;
+}
+
+.alenseo-status-ok {
+    background-color: #fff8e5;
+    color: #ffb900;
+}
+
+.alenseo-status-poor {
+    background-color: #fbeaea;
+    color: #dc3232;
+}
+
+/* Dashicons mit Buttons */
+.button .dashicons {
+    vertical-align: middle;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-top: -2px;
+}
+
+/* Claude API Badge */
+.alenseo-api-badge {
+    display: inline-block;
+    background-color: #8458B3;
+    color: white;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+/* Responsive Anpassungen */
+@media screen and (max-width: 782px) {
+    .alenseo-settings-tabs {
+        flex-direction: column;
+        border-bottom: none;
+    }
+    
+    .alenseo-settings-tab {
+        margin-right: 0;
+        border: 1px solid #ccc;
+        margin-bottom: 5px;
+    }
+    
+    .alenseo-settings-tab.active {
+        margin-bottom: 5px;
+        border-bottom: 1px solid #ccc;
+    }
+    
+    .alenseo-settings-content {
+        border: 1px solid #ccc;
+    }
+    
+    .alenseo-checkbox-grid {
+        grid-template-columns: 1fr;
+    }
 }
