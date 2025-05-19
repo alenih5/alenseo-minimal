@@ -1,6 +1,6 @@
 <?php
 /**
- * Template für die zentrale SEO-Optimierung
+ * Template für ein minimales Dashboard - als Fallback wenn das reguläre Dashboard fehlt
  *
  * @link       https://imponi.ch
  * @since      1.0.0
@@ -14,26 +14,33 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Claude API verfügbar?
-$settings = get_option('alenseo_settings', array());
-$claude_api_active = !empty($settings['claude_api_key']);
+// Zugriff auf die Dashboard-Klasse
+$dashboard = $this;
 
-// Inhalte für das Dashboard abrufen
-$contents_data = $this->get_contents_for_dashboard();
-$contents = $contents_data['contents'];
-$total = $contents_data['total'];
-
-// Statistiken abrufen
-$stats = $this->get_content_statistics();
-
-// Post-Typen für Filter abrufen
-$post_types = isset($settings['post_types']) ? $settings['post_types'] : array('post', 'page');
-$post_type_objects = array();
-foreach ($post_types as $post_type) {
-    $object = get_post_type_object($post_type);
-    if ($object) {
-        $post_type_objects[$post_type] = $object->labels->singular_name;
+// Versuche, Inhaltsdaten zu laden, mit Fehlerbehandlung
+try {
+    $contents_data = $dashboard->get_contents_for_dashboard();
+    $contents = isset($contents_data['contents']) ? $contents_data['contents'] : array();
+    $total = isset($contents_data['total']) ? $contents_data['total'] : 0;
+    
+    // Statistiken abrufen
+    $stats = $dashboard->get_content_statistics();
+} catch (Exception $e) {
+    if (function_exists('alenseo_log')) {
+        alenseo_log("Alenseo Dashboard Template Fehler: " . $e->getMessage());
     }
+    
+    // Standardwerte für Fehlerfall
+    $contents = array();
+    $total = 0;
+    $stats = array(
+        'total' => 0,
+        'with_keyword' => 0,
+        'optimized' => 0,
+        'partially_optimized' => 0,
+        'needs_optimization' => 0,
+        'avg_score' => 0
+    );
 }
 
 ?>
@@ -43,7 +50,13 @@ foreach ($post_types as $post_type) {
         <?php _e('Alenseo SEO-Optimierung', 'alenseo'); ?>
     </h1>
     
-    <?php if (!$claude_api_active) : ?>
+    <?php
+    // Claude API verfügbar?
+    $settings = get_option('alenseo_settings', array());
+    $claude_api_active = !empty($settings['claude_api_key']);
+    
+    if (!$claude_api_active) : 
+    ?>
     <div class="notice notice-warning">
         <p>
             <?php _e('Claude API ist nicht konfiguriert. Um die KI-gestützten Optimierungsfunktionen zu nutzen, bitte', 'alenseo'); ?>
@@ -129,15 +142,25 @@ foreach ($post_types as $post_type) {
         </div>
     </div>
     
+    <!-- Filter- und Suchleiste -->
     <div class="alenseo-bulk-actions-bar">
         <div class="alenseo-search-filter">
             <div class="alenseo-filter-group">
                 <label for="alenseo-filter-post-type"><?php _e('Typ:', 'alenseo'); ?></label>
                 <select id="alenseo-filter-post-type">
                     <option value=""><?php _e('Alle', 'alenseo'); ?></option>
-                    <?php foreach ($post_type_objects as $post_type => $label) : ?>
-                        <option value="<?php echo esc_attr($post_type); ?>"><?php echo esc_html($label); ?></option>
-                    <?php endforeach; ?>
+                    <?php 
+                    // Post-Typen für den Filter abrufen
+                    $post_types = isset($settings['post_types']) ? $settings['post_types'] : array('post', 'page');
+                    $post_type_objects = array();
+                    
+                    foreach ($post_types as $post_type) {
+                        $object = get_post_type_object($post_type);
+                        if ($object) {
+                            echo '<option value="' . esc_attr($post_type) . '">' . esc_html($object->labels->singular_name) . '</option>';
+                        }
+                    }
+                    ?>
                 </select>
             </div>
             
@@ -166,6 +189,7 @@ foreach ($post_types as $post_type) {
             </div>
         </div>
         
+        <!-- Massenaktionen -->
         <div class="alenseo-bulk-actions">
             <div class="alenseo-bulk-actions-select">
                 <select id="alenseo-bulk-action">
@@ -186,6 +210,7 @@ foreach ($post_types as $post_type) {
         </div>
     </div>
     
+    <!-- Fortschrittsanzeige für Massenaktionen -->
     <div id="alenseo-progress-bar" class="alenseo-progress-bar-container" style="display: none;">
         <div class="alenseo-progress-bar">
             <div class="alenseo-progress-fill" style="width: 0%"></div>
@@ -193,6 +218,7 @@ foreach ($post_types as $post_type) {
         <div class="alenseo-progress-text"><?php _e('Optimiere...', 'alenseo'); ?> <span id="alenseo-progress-current">0</span>/<span id="alenseo-progress-total">0</span></div>
     </div>
     
+    <!-- Inhaltsliste -->
     <div class="alenseo-contents-table-container">
         <table class="alenseo-contents-table widefat striped">
             <thead>
@@ -247,12 +273,12 @@ foreach ($post_types as $post_type) {
                                 <?php endif; ?>
                             </td>
                             <td class="column-score">
-                                <div class="alenseo-score-pill <?php echo esc_attr($this->get_score_class($content['seo_score'])); ?>">
+                                <div class="alenseo-score-pill <?php echo esc_attr($dashboard->get_score_class($content['seo_score'])); ?>">
                                     <?php echo esc_html($content['seo_score']); ?>
                                 </div>
                             </td>
                             <td class="column-status">
-                                <?php echo $this->get_status_html($content['seo_status']); ?>
+                                <?php echo $dashboard->get_status_html($content['seo_status']); ?>
                             </td>
                             <td class="column-actions">
                                 <div class="alenseo-actions">
@@ -271,33 +297,6 @@ foreach ($post_types as $post_type) {
                 <?php endif; ?>
             </tbody>
         </table>
-    </div>
-    
-    <div class="alenseo-pagination">
-        <?php if ($contents_data['max_pages'] > 1) : ?>
-            <div class="alenseo-pagination-pages">
-                <?php
-                $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
-                for ($i = 1; $i <= min(5, $contents_data['max_pages']); $i++) {
-                    $class = $i === $current_page ? 'current' : '';
-                    echo '<a href="' . esc_url(add_query_arg('paged', $i)) . '" class="' . $class . '">' . $i . '</a>';
-                }
-                if ($contents_data['max_pages'] > 5) {
-                    echo '<span>...</span>';
-                    echo '<a href="' . esc_url(add_query_arg('paged', $contents_data['max_pages'])) . '">' . $contents_data['max_pages'] . '</a>';
-                }
-                ?>
-            </div>
-        <?php endif; ?>
-        
-        <div class="alenseo-items-per-page">
-            <label for="alenseo-per-page"><?php _e('Einträge pro Seite:', 'alenseo'); ?></label>
-            <select id="alenseo-per-page">
-                <option value="20">20</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-            </select>
-        </div>
     </div>
 </div>
 
@@ -367,32 +366,599 @@ foreach ($post_types as $post_type) {
     </div>
 </div>
 
-<?php
-/**
- * Hilfsfunktion, um die CSS-Klasse für einen Score zu bestimmen
- */
-function get_score_class($score) {
-    if ($score >= 80) {
-        return 'score-good';
-    } elseif ($score >= 50) {
-        return 'score-ok';
-    } else {
-        return 'score-poor';
-    }
+<!-- Füge CSS-Stile inline hinzu, falls die CSS-Datei nicht geladen werden konnte -->
+<style>
+.alenseo-optimizer-wrap {
+    margin: 20px 0;
 }
 
-/**
- * Hilfsfunktion, um das HTML für einen Status zu generieren
- */
-function get_status_html($status) {
-    switch ($status) {
-        case 'optimized':
-            return '<span class="alenseo-status alenseo-status-good">' . __('Gut optimiert', 'alenseo') . '</span>';
-        case 'partially_optimized':
-            return '<span class="alenseo-status alenseo-status-ok">' . __('Teilweise optimiert', 'alenseo') . '</span>';
-        case 'needs_optimization':
-        default:
-            return '<span class="alenseo-status alenseo-status-poor">' . __('Optimierung nötig', 'alenseo') . '</span>';
-    }
+.alenseo-optimizer-wrap h1 {
+    display: flex;
+    align-items: center;
 }
-?>
+
+.alenseo-optimizer-wrap h1 .dashicons {
+    margin-right: 10px;
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+}
+
+.alenseo-dashboard-header {
+    margin: 20px 0;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    padding: 20px;
+    border-radius: 3px;
+}
+
+.alenseo-stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.alenseo-stat-box {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.alenseo-stat-box-primary {
+    background: #fff;
+    border-color: #007cba;
+}
+
+.alenseo-stat-box-header {
+    padding: 10px 15px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.alenseo-stat-box-primary .alenseo-stat-box-header {
+    background: #007cba;
+    color: #fff;
+}
+
+.alenseo-stat-box-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.alenseo-stat-box-content {
+    padding: 15px;
+}
+
+.alenseo-stat-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 8px solid #ddd;
+    position: relative;
+}
+
+.alenseo-stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #333;
+}
+
+.alenseo-stat-description {
+    text-align: center;
+    color: #666;
+}
+
+.alenseo-stat-bars {
+    margin-top: 10px;
+}
+
+.alenseo-stat-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.alenseo-stat-bar-label {
+    flex: 0 0 150px;
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-stat-bar-label span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.alenseo-stat-bar-label .status-good {
+    background-color: #46b450;
+}
+
+.alenseo-stat-bar-label .status-ok {
+    background-color: #ffb900;
+}
+
+.alenseo-stat-bar-label .status-poor {
+    background-color: #dc3232;
+}
+
+.alenseo-stat-bar-progress {
+    flex: 1;
+    height: 10px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 0 10px;
+}
+
+.alenseo-stat-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.alenseo-bar-good {
+    background-color: #46b450;
+}
+
+.alenseo-bar-ok {
+    background-color: #ffb900;
+}
+
+.alenseo-bar-poor {
+    background-color: #dc3232;
+}
+
+.alenseo-stat-bar-value {
+    flex: 0 0 40px;
+    text-align: right;
+    font-weight: 600;
+}
+
+.alenseo-progress-stats {
+    margin-top: 10px;
+}
+
+.alenseo-progress-item {
+    margin-bottom: 15px;
+}
+
+.alenseo-progress-label {
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.alenseo-progress-bar {
+    height: 10px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.alenseo-progress-fill {
+    height: 100%;
+    background-color: #007cba;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.alenseo-progress-value {
+    text-align: right;
+    font-size: 12px;
+    color: #666;
+}
+
+.alenseo-bulk-actions-bar {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 10px 15px;
+    border-radius: 3px;
+}
+
+.alenseo-search-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px;
+}
+
+.alenseo-filter-group, .alenseo-search-group {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-filter-group label {
+    margin-right: 5px;
+}
+
+.alenseo-bulk-actions {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.alenseo-bulk-actions-select {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-bulk-actions-select select {
+    margin-right: 5px;
+}
+
+.alenseo-selection-info {
+    margin-left: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-progress-bar-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+}
+
+.alenseo-progress-bar {
+    height: 15px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.alenseo-progress-fill {
+    height: 100%;
+    background-color: #007cba;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.alenseo-progress-text {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+}
+
+.alenseo-contents-table-container {
+    margin-top: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.alenseo-contents-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.alenseo-contents-table th {
+    text-align: left;
+    padding: 8px 10px;
+}
+
+.alenseo-contents-table th.check-column {
+    width: 30px;
+}
+
+.alenseo-contents-table th.column-title {
+    width: 30%;
+}
+
+.alenseo-contents-table th.column-type {
+    width: 10%;
+}
+
+.alenseo-contents-table th.column-keyword {
+    width: 20%;
+}
+
+.alenseo-contents-table th.column-score,
+.alenseo-contents-table th.column-status {
+    width: 15%;
+}
+
+.alenseo-contents-table th.column-actions {
+    width: 10%;
+}
+
+.alenseo-contents-table td {
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+
+.alenseo-keyword-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #333;
+}
+
+.alenseo-no-keyword {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+}
+
+.alenseo-score-pill {
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    border-radius: 50%;
+    background: #f0f0f0;
+    font-weight: bold;
+    color: #fff;
+}
+
+.alenseo-score-pill.score-good {
+    background-color: #46b450;
+}
+
+.alenseo-score-pill.score-ok {
+    background-color: #ffb900;
+}
+
+.alenseo-score-pill.score-poor {
+    background-color: #dc3232;
+}
+
+.alenseo-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.alenseo-status-good {
+    background-color: #eaf9eb;
+    color: #46b450;
+}
+
+.alenseo-status-ok {
+    background-color: #fff8e5;
+    color: #ffb900;
+}
+
+.alenseo-status-poor {
+    background-color: #fbeaea;
+    color: #dc3232;
+}
+
+.alenseo-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.alenseo-actions button {
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alenseo-actions .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.alenseo-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alenseo-dialog-content {
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.alenseo-dialog-header {
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alenseo-dialog-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.alenseo-dialog-close {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    padding: 0;
+    color: #666;
+}
+
+.alenseo-dialog-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.alenseo-dialog-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.alenseo-dialog-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.alenseo-dialog-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #23282d;
+}
+
+.alenseo-current-keyword {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+}
+
+.alenseo-keyword-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.alenseo-keyword-item {
+    padding: 8px 12px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.alenseo-keyword-item:hover,
+.alenseo-keyword-item.selected {
+    background: #f0f7fb;
+    border-color: #007cba;
+}
+
+.alenseo-keyword-text {
+    display: block;
+    font-weight: 500;
+}
+
+.alenseo-keyword-text small {
+    font-weight: normal;
+    color: #666;
+}
+
+.alenseo-optimization-options {
+    margin-top: 15px;
+}
+
+.alenseo-optimization-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.alenseo-optimization-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.alenseo-dialog-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.alenseo-dialog-loader .spinner {
+    float: none;
+    margin: 0 10px 0 0;
+}
+
+.alenseo-result-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+}
+
+.alenseo-result-section h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #23282d;
+}
+
+.alenseo-result-content {
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    margin-bottom: 10px;
+}
+
+.alenseo-content-suggestions {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.alenseo-content-suggestions li {
+    margin-bottom: 8px;
+}
+
+.alenseo-dialog-footer {
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border-top: 1px solid #e5e5e5;
+    text-align: right;
+}
+
+@keyframes rotation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.dashicons-update {
+    animation: rotation 2s infinite linear;
+}
+</style>
