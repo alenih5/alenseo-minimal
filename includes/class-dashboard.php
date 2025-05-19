@@ -121,19 +121,43 @@ class Alenseo_Dashboard {
                         ALENSEO_MINIMAL_VERSION,
                         true
                     );
-                    
-                    // AJAX-URL und Nonce für JavaScript
-                    wp_localize_script('alenseo-dashboard-js', 'alenseoData', array(
-                        'ajaxUrl' => admin_url('admin-ajax.php'),
-                        'nonce' => wp_create_nonce('alenseo_ajax_nonce'),
-                        'detailPageUrl' => admin_url('admin.php?page=alenseo-page-detail'),
-                        'messages' => array(
-                            'analyzing' => __('Analysiere...', 'alenseo'),
-                            'success' => __('Analyse erfolgreich!', 'alenseo'),
-                            'error' => __('Fehler bei der Analyse. Bitte versuche es erneut.', 'alenseo')
-                        )
-                    ));
                 }
+                
+                // Enhanced bulk optimizer JS
+                if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/js/bulk-optimizer.js')) {
+                    wp_enqueue_script(
+                        'alenseo-bulk-optimizer-js',
+                        ALENSEO_MINIMAL_URL . 'assets/js/bulk-optimizer.js',
+                        array('jquery'),
+                        ALENSEO_MINIMAL_VERSION,
+                        true
+                    );
+                }
+                
+                // Dashboard CSS
+                if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/dashboard.css')) {
+                    wp_enqueue_style(
+                        'alenseo-dashboard-css',
+                        ALENSEO_MINIMAL_URL . 'assets/css/dashboard.css',
+                        array(),
+                        ALENSEO_MINIMAL_VERSION
+                    );
+                }
+                
+                // AJAX-URL und Nonce für JavaScript
+                wp_localize_script('alenseo-dashboard-js', 'alenseoData', array(
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('alenseo_ajax_nonce'),
+                    'detailPageUrl' => admin_url('admin.php?page=alenseo-page-detail'),
+                    'messages' => array(
+                        'analyzing' => __('Analysiere...', 'alenseo'),
+                        'success' => __('Analyse erfolgreich!', 'alenseo'),
+                        'error' => __('Fehler bei der Analyse. Bitte versuche es erneut.', 'alenseo'),
+                        'selectAction' => __('Bitte wähle eine Aktion aus.', 'alenseo'),
+                        'selectContent' => __('Bitte wähle mindestens einen Inhalt aus.', 'alenseo'),
+                        'allDone' => __('Alle Optimierungen wurden erfolgreich abgeschlossen!', 'alenseo')
+                    )
+                ));
             }
             
             // Detailansicht-Seite

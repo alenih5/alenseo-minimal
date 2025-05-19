@@ -49,12 +49,15 @@ function alenseo_require_file($file) {
 $required_files = array(
     'includes/minimal-admin.php',
     'includes/class-minimal-analysis.php',
+    'includes/class-enhanced-analysis.php',
     'includes/class-dashboard.php',
+    'includes/class-meta-box.php',
     'includes/class-claude-api.php',
     'includes/class-content-optimizer.php',
     'includes/alenseo-ajax-handlers.php',
     'includes/alenseo-claude-ajax.php',
-    'includes/alenseo-enhanced-ajax.php'
+    'includes/alenseo-enhanced-ajax.php',
+    'includes/alenseo-test-functions.php'
 );
 
 $missing_files = array();
@@ -92,9 +95,22 @@ function alenseo_init() {
             error_log('Alenseo SEO Minimal: Klasse "Alenseo_Dashboard" nicht gefunden.');
         }
         
+        // Meta Box Unterstützung hinzufügen
+        if (class_exists('Alenseo_Meta_Box')) {
+            new Alenseo_Meta_Box();
+        } else {
+            error_log('Alenseo SEO Minimal: Klasse "Alenseo_Meta_Box" nicht gefunden.');
+        }
+        
         if ((defined('WPB_VC_VERSION') || class_exists('WPBakeryVisualComposer')) && 
             class_exists('Alenseo_WPBakery_Integration')) {
             new Alenseo_WPBakery_Integration();
+        }
+        
+        // Enhanced Analysis aktivieren, wenn verfügbar
+        if (class_exists('Alenseo_Enhanced_Analysis')) {
+            // Diese Klasse wird bei Bedarf instanziiert
+            add_filter('alenseo_use_enhanced_analysis', '__return_true');
         }
     } catch (Exception $e) {
         error_log('Alenseo SEO Minimal - Initialisierungsfehler: ' . $e->getMessage());

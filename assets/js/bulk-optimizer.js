@@ -391,6 +391,24 @@ jQuery(document).ready(function($) {
         // UI-Elemente deaktivieren
         applyBulkActionButton.prop('disabled', true);
         
+        // Batch-Einstellungen
+        const batchSize = 5; // Anzahl der Elemente pro Batch
+        
+        // Optimierungseinstellungen abrufen
+        const optimizeSettings = {
+            optimize_title: action === 'alenseo_bulk_optimize_titles' || action === 'alenseo_bulk_optimize_all',
+            optimize_meta_description: action === 'alenseo_bulk_optimize_meta_descriptions' || action === 'alenseo_bulk_optimize_all',
+            optimize_content: action === 'alenseo_bulk_optimize_content' || action === 'alenseo_bulk_optimize_all',
+            tone: 'professional', // Standardwert oder aus einer Auswahl übernehmen
+            level: 'moderate'     // Standardwert oder aus einer Auswahl übernehmen
+        };
+        
+        // Batch-Verarbeitung starten
+        processBatch(action, contentIds, 0, batchSize, optimizeSettings);
+    }
+    
+    // Batch-Verarbeitung
+    function processBatch(action, contentIds, batchIndex, batchSize, settings) {
         // AJAX-Anfrage senden
         $.ajax({
             url: ajaxurl,
@@ -398,22 +416,36 @@ jQuery(document).ready(function($) {
             data: {
                 action: action,
                 post_ids: contentIds,
+                batch_size: batchSize,
+                batch_index: batchIndex,
+                settings: settings,
                 nonce: alenseoData.nonce
             },
             success: function(response) {
-                // UI-Elemente zurücksetzen
-                applyBulkActionButton.prop('disabled', false);
-                
                 if (response.success) {
-                    // Fortschrittsanzeige abschließen
-                    completeProgressBar();
+                    // Fortschritt aktualisieren
+                    updateProgressBar(response.data.stats.processed, response.data.stats.total);
                     
-                    // Erfolgsmeldung anzeigen
-                    alert(response.data.message || alenseoData.messages.allDone);
-                    
-                    // Seite neu laden, um aktualisierte Daten anzuzeigen
-                    location.reload();
+                    // Wenn nicht abgeschlossen, nächsten Batch verarbeiten
+                    if (!response.data.completed) {
+                        processBatch(action, contentIds, response.data.next_batch, batchSize, settings);
+                    } else {
+                        // Abschluss
+                        completeProgressBar();
+                        
+                        // UI-Elemente zurücksetzen
+                        applyBulkActionButton.prop('disabled', false);
+                        
+                        // Erfolgsmeldung anzeigen
+                        alert(response.data.message || alenseoData.messages.allDone);
+                        
+                        // Seite neu laden, um aktualisierte Daten anzuzeigen
+                        location.reload();
+                    }
                 } else {
+                    // UI-Elemente zurücksetzen
+                    applyBulkActionButton.prop('disabled', false);
+                    
                     // Fehlerbehandlung
                     alert(response.data.message || alenseoData.messages.error);
                     progressBarContainer.hide();

@@ -209,8 +209,16 @@ class Alenseo_Claude_API {
         $cache_key = 'alenseo_claude_' . md5($this->model . json_encode($request_data));
         $cached_response = get_transient($cache_key);
         
+        // Statistikzähler inkrementieren
+        $total_requests = get_option('alenseo_total_api_requests', 0);
+        update_option('alenseo_total_api_requests', $total_requests + 1);
+        
         // Gecachte Antwort verwenden, falls vorhanden
         if ($cached_response !== false) {
+            // Cache-Treffer zählen
+            $cache_hits = get_option('alenseo_cache_hits', 0);
+            update_option('alenseo_cache_hits', $cache_hits + 1);
+            
             return $cached_response;
         }
         
@@ -229,28 +237,9 @@ class Alenseo_Claude_API {
         );
         
         // Fehlerbehandlung
-        if (is_wp_error($response)) {
-            error_log('Alenseo Claude API Error: ' . $response->get_error_message());
-            return $response;
-        }
-        
-        $response_code = wp_remote_retrieve_response_code($response);
-        if ($response_code !== 200) {
-            $error_message = wp_remote_retrieve_response_message($response);
-            error_log("Alenseo Claude API Error ({$response_code}): {$error_message}");
-            
-            if ($response_code === 429) {
-                return new WP_Error('rate_limited', __('API-Limit erreicht. Bitte versuche es später erneut.', 'alenseo'));
-            }
-            
-            if ($response_code === 401) {
-                return new WP_Error('unauthorized', __('Ungültiger API-Schlüssel.', 'alenseo'));
-            }
-            
-            return new WP_Error(
-                'api_error',
-                sprintf(__('API-Fehler: %s', 'alenseo'), $error_message)
-            );
+        $error = $this->handle_api_error($response);
+        if (is_wp_error($error)) {
+            return $error;
         }
         
         // Erfolgreiche Antwort verarbeiten
@@ -271,5 +260,85 @@ class Alenseo_Claude_API {
         set_transient($cache_key, $result, 60 * 60);
         
         return $result;
+    }
+    
+    /**
+     * Erweiterte Fehlerbehandlung für API-Anfragen
+     * 
+     * @param WP_Error|array $response Die API-Antwort
+     * @return WP_Error|false WP_Error bei Fehler, false bei Erfolg
+     */
+    private function handle_api_error($response) {
+        // Wenn bereits ein WP_Error, direkt zurückgeben
+        if (is_wp_error($response)) {
+            error_log('Alenseo Claude API Error: ' . $response->get_error_message());
+            return $response;
+        }
+        
+        $response_code = wp_remote_retrieve_response_code($response);
+        
+        // Wenn kein 200er Code, Fehler zurückgeben
+        if ($response_code !== 200) {
+            $error_message = wp_remote_retrieve_response_message($response);
+            $body = wp_remote_retrieve_body($response);
+            $error_data = json_decode($body, true);
+            
+            // Detaillierte Fehlermeldung aus dem Body extrahieren, falls vorhanden
+            if (!empty($error_data['error']) && !empty($error_data['error']['message'])) {
+                $error_message = $error_data['error']['message'];
+            }
+            
+            error_log("Alenseo Claude API Error ({$response_code}): {$error_message}");
+            
+            // Häufige API-Fehler mit benutzerfreundlichen Meldungen abfangen
+            switch ($response_code) {
+                case 400:
+                    return new WP_Error(
+                        'bad_request',
+                        __('Ungültige Anfrage an die API. Möglicherweise ist der Prompt zu lang.', 'alenseo')
+                    );
+                    
+                case 401:
+                    return new WP_Error(
+                        'unauthorized',
+                        __('Ungültiger API-Schlüssel oder Authentifizierungsfehler.', 'alenseo')
+                    );
+                    
+                case 403:
+                    return new WP_Error(
+                        'forbidden',
+                        __('Keine Berechtigung für diese API-Anfrage.', 'alenseo')
+                    );
+                    
+                case 404:
+                    return new WP_Error(
+                        'not_found',
+                        __('API-Endpunkt nicht gefunden.', 'alenseo')
+                    );
+                    
+                case 429:
+                    return new WP_Error(
+                        'rate_limited',
+                        __('API-Limit erreicht. Bitte versuche es später erneut.', 'alenseo')
+                    );
+                    
+                case 500:
+                case 502:
+                case 503:
+                case 504:
+                    return new WP_Error(
+                        'server_error',
+                        __('API-Serverfehler. Bitte versuche es später erneut.', 'alenseo')
+                    );
+                    
+                default:
+                    return new WP_Error(
+                        'api_error',
+                        sprintf(__('API-Fehler: %s (Code: %s)', 'alenseo'), $error_message, $response_code)
+                    );
+            }
+        }
+        
+        return false; // Kein Fehler
     }
 }

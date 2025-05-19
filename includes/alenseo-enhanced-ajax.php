@@ -465,150 +465,37 @@ function alenseo_bulk_optimize_content() {
     
     $optimizer = new Alenseo_Content_Optimizer();
     
-    // Jeden Post im aktuellen Batch verarbeiten
-    foreach ($current_batch as $post_id) {
-        $post = get_post($post_id);
+    // Optimierungsoptionen festlegen
+    $optimization_options = array(
+        'optimize_title' => (bool)$optimize_settings['optimize_title'],
+        'optimize_meta_description' => (bool)$optimize_settings['optimize_meta_description'],
+        'optimize_content' => (bool)$optimize_settings['optimize_content'],
+        'generate_keywords' => true, // Keywords generieren, wenn keine vorhanden
+        'auto_save' => true, // Optimierungen automatisch speichern
+        'tone' => isset($optimize_settings['tone']) ? $optimize_settings['tone'] : 'professional',
+        'level' => isset($optimize_settings['level']) ? $optimize_settings['level'] : 'moderate'
+    );
+    
+    try {
+        // Batch-Optimierung mit der neuen verbesserten Methode
+        $batch_results = $optimizer->batch_optimize($current_batch, $optimization_options);
         
-        if (!$post) {
-            $results[$post_id] = array(
-                'status' => 'error',
-                'message' => __('Beitrag nicht gefunden.', 'alenseo')
-            );
-            $error_count++;
-            continue;
-        }
-        
-        // Keyword abrufen oder eines generieren
-        $keyword = get_post_meta($post_id, '_alenseo_keyword', true);
-        
-        if (empty($keyword)) {
-            // Automatisch ein Keyword generieren
-            try {
-                if (class_exists('Alenseo_Claude_API')) {
-                    $claude_api = new Alenseo_Claude_API();
-                    $title = $post->post_title;
-                    $content = wp_strip_all_tags($post->post_content);
-                    
-                    if (mb_strlen($content) > 2000) {
-                        $content = mb_substr($content, 0, 1997) . '...';
-                    }
-                    
-                    // Einfachen Prompt erstellen
-                    $prompt = "Extrahiere das wichtigste Keyword aus diesem Text. Titel: \"{$title}\". Inhalt: \"{$content}\". Antworte nur mit dem Keyword ohne weitere Erklärung.";
-                    
-                    // Keyword generieren
-                    $generated_keyword = $claude_api->generate_text($prompt, array(
-                        'max_tokens' => 100,
-                        'temperature' => 0.1
-                    ));
-                    
-                    if (!is_wp_error($generated_keyword)) {
-                        $keyword = trim($generated_keyword);
-                        update_post_meta($post_id, '_alenseo_keyword', $keyword);
-                    } else {
-                        $results[$post_id] = array(
-                            'status' => 'error',
-                            'message' => __('Fehler bei der Keyword-Generierung:', 'alenseo') . ' ' . $generated_keyword->get_error_message()
-                        );
-                        $error_count++;
-                        continue;
-                    }
-                } else {
-                    $results[$post_id] = array(
-                        'status' => 'error',
-                        'message' => __('Claude API nicht verfügbar für die Keyword-Generierung.', 'alenseo')
-                    );
-                    $error_count++;
-                    continue;
-                }
-            } catch (Exception $e) {
-                $results[$post_id] = array(
-                    'status' => 'error',
-                    'message' => __('Fehler bei der Keyword-Generierung:', 'alenseo') . ' ' . $e->getMessage()
-                );
+        // Ergebnisse verarbeiten
+        foreach ($batch_results as $post_id => $result) {
+            $results[$post_id] = $result;
+            
+            if ($result['status'] === 'success' || $result['status'] === 'partial') {
+                $success_count++;
+            } else {
                 $error_count++;
-                continue;
             }
         }
-        
-        // Optimierungen durchführen
-        $optimizations = array();
-        
-        try {
-            // Titel optimieren
-            if ($optimize_settings['optimize_title']) {
-                $title_result = $optimizer->optimize_title($post_id, $keyword, $optimize_settings);
-                
-                if (!is_wp_error($title_result)) {
-                    $optimizations['title'] = array(
-                        'status' => 'success',
-                        'original' => $post->post_title,
-                        'optimized' => $title_result
-                    );
-                } else {
-                    $optimizations['title'] = array(
-                        'status' => 'error',
-                        'message' => $title_result->get_error_message()
-                    );
-                }
-            }
-            
-            // Meta-Description optimieren
-            if ($optimize_settings['optimize_meta_description']) {
-                $meta_result = $optimizer->optimize_meta_description($post_id, $keyword, $optimize_settings);
-                
-                if (!is_wp_error($meta_result)) {
-                    $optimizations['meta_description'] = array(
-                        'status' => 'success',
-                        'original' => get_post_meta($post_id, '_alenseo_meta_description', true),
-                        'optimized' => $meta_result
-                    );
-                } else {
-                    $optimizations['meta_description'] = array(
-                        'status' => 'error',
-                        'message' => $meta_result->get_error_message()
-                    );
-                }
-            }
-            
-            // Inhalt optimieren
-            if ($optimize_settings['optimize_content']) {
-                $content_result = $optimizer->generate_content_suggestions($post_id, $keyword, $optimize_settings);
-                
-                if (!is_wp_error($content_result)) {
-                    $optimizations['content'] = array(
-                        'status' => 'success',
-                        'suggestions' => $content_result
-                    );
-                } else {
-                    $optimizations['content'] = array(
-                        'status' => 'error',
-                        'message' => $content_result->get_error_message()
-                    );
-                }
-            }
-            
-            // Analyse durchführen und Score aktualisieren
-            if (class_exists('Alenseo_Minimal_Analysis')) {
-                $analyzer = new Alenseo_Minimal_Analysis();
-                $analyzer->analyze_post($post_id);
-            }
-            
-            $success_count++;
-            $results[$post_id] = array(
-                'status' => 'success',
-                'title' => $post->post_title,
-                'keyword' => $keyword,
-                'optimizations' => $optimizations
-            );
-            
-        } catch (Exception $e) {
-            $error_count++;
-            $results[$post_id] = array(
-                'status' => 'error',
-                'message' => __('Fehler bei der Optimierung:', 'alenseo') . ' ' . $e->getMessage()
-            );
-        }
+    } catch (Exception $e) {
+        wp_send_json_error(array(
+            'message' => __('Fehler bei der Batch-Optimierung:', 'alenseo') . ' ' . $e->getMessage(),
+            'batch' => $batch_index + 1
+        ));
+        return;
     }
     
     // Nächsten Batch berechnen

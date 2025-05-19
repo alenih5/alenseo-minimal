@@ -29,6 +29,20 @@ class Alenseo_Content_Optimizer {
     private $claude_api;
     
     /**
+     * Enhanced Analysis-Instanz
+     * 
+     * @var Alenseo_Enhanced_Analysis
+     */
+    private $enhanced_analysis;
+    
+    /**
+     * Ob die erweiterte Analyse verwendet werden soll
+     * 
+     * @var bool
+     */
+    private $use_enhanced_analysis = false;
+    
+    /**
      * Initialisierung der Klasse
      */
     public function __construct() {
@@ -37,6 +51,14 @@ class Alenseo_Content_Optimizer {
             $this->claude_api = new Alenseo_Claude_API();
         } else {
             error_log('Alenseo_Content_Optimizer: Claude API-Klasse nicht gefunden.');
+        }
+        
+        // Prüfen ob erweiterte Analyse verwendet werden soll
+        $this->use_enhanced_analysis = apply_filters('alenseo_use_enhanced_analysis', false);
+        
+        // Enhanced Analysis-Klasse laden, wenn verfügbar und aktiviert
+        if ($this->use_enhanced_analysis && class_exists('Alenseo_Enhanced_Analysis')) {
+            $this->enhanced_analysis = new Alenseo_Enhanced_Analysis();
         }
     }
     
@@ -148,7 +170,7 @@ class Alenseo_Content_Optimizer {
         $prompt = $this->build_meta_description_prompt($post, $keyword, $current_meta_description, $options);
         
         // API-Anfrage
-        $response = $this->claude_api->generate_text($prompt);
+        $response = $->claude_api->generate_text($prompt);
         
         // Fehler prüfen
         if (is_wp_error($response)) {
@@ -292,6 +314,184 @@ class Alenseo_Content_Optimizer {
             default:
                 return new WP_Error('invalid_type', 'Ungültiger Vorschlagstyp.');
         }
+    }
+    
+    /**
+     * Batch-Optimierung für mehrere Posts
+     * 
+     * @param array $post_ids    Die Post-IDs für die Batch-Optimierung
+     * @param array $options     Zusätzliche Optionen für die Optimierung
+     * @return array             Ergebnisse der Batch-Optimierung
+     */
+    public function batch_optimize($post_ids, $options = array()) {
+        // Standard-Optionen festlegen
+        $default_options = array(
+            'optimize_title' => true,
+            'optimize_meta_description' => true,
+            'optimize_content' => false,
+            'auto_save' => false,
+            'generate_keywords' => false,
+            'tone' => 'professional',
+            'level' => 'moderate'
+        );
+        
+        $options = wp_parse_args($options, $default_options);
+        
+        $results = array();
+        
+        // Jeden Post optimieren
+        foreach ($post_ids as $post_id) {
+            $post_result = array(
+                'post_id' => $post_id,
+                'title' => '',
+                'status' => 'pending',
+                'optimizations' => array()
+            );
+            
+            // Post abrufen
+            $post = get_post($post_id);
+            
+            if (!$post) {
+                $post_result['status'] = 'error';
+                $post_result['message'] = __('Beitrag nicht gefunden.', 'alenseo');
+                $results[$post_id] = $post_result;
+                continue;
+            }
+            
+            $post_result['title'] = $post->post_title;
+            
+            try {
+                // Keyword abrufen oder generieren, falls erforderlich
+                $keyword = get_post_meta($post_id, '_alenseo_keyword', true);
+                
+                if (empty($keyword) && $options['generate_keywords']) {
+                    if ($this->claude_api) {
+                        $generated_keywords = $this->generate_post_keywords($post_id);
+                        
+                        if (!is_wp_error($generated_keywords) && is_array($generated_keywords) && !empty($generated_keywords)) {
+                            // Erstes Keyword verwenden
+                            $keyword = $generated_keywords[0];
+                            update_post_meta($post_id, '_alenseo_keyword', $keyword);
+                            
+                            $post_result['keyword_generated'] = true;
+                            $post_result['keyword'] = $keyword;
+                        } else {
+                            $post_result['keyword_error'] = is_wp_error($generated_keywords) ? 
+                                $generated_keywords->get_error_message() : 
+                                __('Fehler bei der Keyword-Generierung.', 'alenseo');
+                        }
+                    }
+                } else {
+                    $post_result['keyword'] = $keyword;
+                }
+                
+                // Wenn kein Keyword vorhanden oder generiert werden konnte, überspringen
+                if (empty($keyword)) {
+                    $post_result['status'] = 'skipped';
+                    $post_result['message'] = __('Kein Keyword vorhanden und konnte nicht generiert werden.', 'alenseo');
+                    $results[$post_id] = $post_result;
+                    continue;
+                }
+                
+                // Optimierungen durchführen
+                if ($options['optimize_title']) {
+                    $title_result = $this->optimize_title($post_id, $keyword, $options);
+                    
+                    if (!is_wp_error($title_result)) {
+                        $post_result['optimizations']['title'] = array(
+                            'status' => 'success',
+                            'original' => $post->post_title,
+                            'optimized' => $title_result
+                        );
+                        
+                        // Automatisch speichern, wenn aktiviert
+                        if ($options['auto_save']) {
+                            wp_update_post(array(
+                                'ID' => $post_id,
+                                'post_title' => $title_result
+                            ));
+                        }
+                    } else {
+                        $post_result['optimizations']['title'] = array(
+                            'status' => 'error',
+                            'message' => $title_result->get_error_message()
+                        );
+                    }
+                }
+                
+                if ($options['optimize_meta_description']) {
+                    $meta_result = $this->optimize_meta_description($post_id, $keyword, $options);
+                    
+                    if (!is_wp_error($meta_result)) {
+                        $current_meta = get_post_meta($post_id, '_alenseo_meta_description', true);
+                        
+                        $post_result['optimizations']['meta_description'] = array(
+                            'status' => 'success',
+                            'original' => $current_meta,
+                            'optimized' => $meta_result
+                        );
+                        
+                        // Automatisch speichern, wenn aktiviert
+                        if ($options['auto_save']) {
+                            update_post_meta($post_id, '_alenseo_meta_description', $meta_result);
+                        }
+                    } else {
+                        $post_result['optimizations']['meta_description'] = array(
+                            'status' => 'error',
+                            'message' => $meta_result->get_error_message()
+                        );
+                    }
+                }
+                
+                if ($options['optimize_content']) {
+                    $content_result = $this->generate_content_suggestions($post_id, $keyword, $options);
+                    
+                    if (!is_wp_error($content_result)) {
+                        $post_result['optimizations']['content'] = array(
+                            'status' => 'success',
+                            'suggestions' => $content_result
+                        );
+                        
+                        // Content-Optimierung wird nicht automatisch gespeichert
+                    } else {
+                        $post_result['optimizations']['content'] = array(
+                            'status' => 'error',
+                            'message' => $content_result->get_error_message()
+                        );
+                    }
+                }
+                
+                // Wenn mindestens eine Optimierung erfolgreich war
+                if (
+                    (isset($post_result['optimizations']['title']) && $post_result['optimizations']['title']['status'] === 'success') ||
+                    (isset($post_result['optimizations']['meta_description']) && $post_result['optimizations']['meta_description']['status'] === 'success') ||
+                    (isset($post_result['optimizations']['content']) && $post_result['optimizations']['content']['status'] === 'success')
+                ) {
+                    $post_result['status'] = 'success';
+                    
+                    // SEO-Analyse durchführen, wenn automatisches Speichern aktiviert ist
+                    if ($options['auto_save'] && class_exists('Alenseo_Minimal_Analysis')) {
+                        $analyzer = new Alenseo_Minimal_Analysis();
+                        $analyzer->analyze_post($post_id);
+                        
+                        // Neuen Score abrufen
+                        $new_score = get_post_meta($post_id, '_alenseo_seo_score', true);
+                        $post_result['new_score'] = $new_score;
+                    }
+                } else {
+                    $post_result['status'] = 'error';
+                    $post_result['message'] = __('Keine der Optimierungen war erfolgreich.', 'alenseo');
+                }
+                
+            } catch (Exception $e) {
+                $post_result['status'] = 'error';
+                $post_result['message'] = $e->getMessage();
+            }
+            
+            $results[$post_id] = $post_result;
+        }
+        
+        return $results;
     }
     
     /*
@@ -543,5 +743,82 @@ Formatiere deine Antwort als nummerierte Liste mit einzelnen, prägnanten Vorsch
         }
         
         return $suggestions;
+    }
+
+    /**
+     * Keywords für einen Post generieren
+     * 
+     * @param int $post_id Die Post-ID
+     * @return array|WP_Error Array mit Keywords oder Fehler
+     */
+    public function generate_post_keywords($post_id) {
+        if (!$this->claude_api) {
+            return new WP_Error('claude_api_missing', __('Claude API ist nicht verfügbar.', 'alenseo'));
+        }
+        
+        // Post abrufen
+        $post = get_post($post_id);
+        if (!$post) {
+            return new WP_Error('post_not_found', __('Beitrag nicht gefunden.', 'alenseo'));
+        }
+        
+        // Inhalt extrahieren
+        $title = $post->post_title;
+        $content = wp_strip_all_tags($post->post_content);
+        
+        // Maximal 2000 Zeichen des Inhalts verwenden
+        if (mb_strlen($content) > 2000) {
+            $content = mb_substr($content, 0, 1997) . '...';
+        }
+        
+        // Prompt für Keyword-Generierung erstellen
+        $prompt = "Du bist ein SEO-Experte mit jahrelanger Erfahrung in der Keyword-Recherche. Deine Aufgabe ist es, relevante Keywords für eine Webseite vorzuschlagen.
+
+Der Titel der Webseite lautet: \"{$title}\".
+
+Hier ist ein Auszug aus dem Inhalt der Seite:
+\"{$content}\"
+
+Bitte schlage 5 Fokus-Keywords vor, die:
+1. Relevant für den Inhalt der Seite sind
+2. Ein gutes Suchvolumen haben könnten
+3. Eine realistische Chance auf Rankings bieten (nicht zu wettbewerbsintensiv)
+4. Eine klare Nutzerintention widerspiegeln
+
+Formatiere deine Antwort als eine einfache, durch Kommas getrennte Liste der 5 Keywords, ohne Nummerierung oder zusätzliche Erklärungen.";
+
+        // API-Anfrage senden
+        $response = $this->claude_api->generate_text($prompt, array(
+            'temperature' => 0.1,
+            'max_tokens' => 300
+        ));
+        
+        // Fehler prüfen
+        if (is_wp_error($response)) {
+            return $response;
+        }
+        
+        // Keywords aus der Antwort extrahieren
+        if (function_exists('extract_keywords_from_response')) {
+            return extract_keywords_from_response($response);
+        }
+        
+        // Eigene Extraktion, falls die Funktion nicht existiert
+        $response = trim($response);
+        $response = trim($response, '"\'');
+        $keywords = preg_split('/[,\n]+/', $response, -1, PREG_SPLIT_NO_EMPTY);
+        
+        // Bereinigen
+        $cleaned_keywords = array();
+        foreach ($keywords as $keyword) {
+            $keyword = trim($keyword);
+            $keyword = trim($keyword, '"\'');
+            
+            if (!empty($keyword) && !in_array($keyword, $cleaned_keywords)) {
+                $cleaned_keywords[] = $keyword;
+            }
+        }
+        
+        return $cleaned_keywords;
     }
 }
