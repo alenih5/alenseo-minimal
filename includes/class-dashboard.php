@@ -335,6 +335,61 @@ class Alenseo_Dashboard {
     }
     
     /**
+     * SEO-Optimierungsseite rendern
+     */
+    public function render_optimizer_page() {
+        try {
+            // Optimizer-Template laden
+            $template_file = ALENSEO_MINIMAL_DIR . 'templates/optimizer-page.php';
+            
+            if (file_exists($template_file)) {
+                // Optimizer-Klasse prüfen
+                if (!class_exists('Alenseo_Content_Optimizer')) {
+                    echo '<div class="wrap"><h1>' . __('SEO-Optimierung', 'alenseo') . '</h1>';
+                    echo '<div class="notice notice-error"><p>' . __('Content Optimizer-Klasse konnte nicht geladen werden.', 'alenseo') . '</p></div>';
+                    echo '</div>';
+                    return;
+                }
+                
+                // Optimize-Instanz erstellen
+                $optimizer = new Alenseo_Content_Optimizer();
+                
+                // Daten für die Optimierung vorbereiten
+                $settings = get_option('alenseo_settings', array());
+                $api_configured = false;
+                
+                if (class_exists('Alenseo_Claude_API')) {
+                    $claude_api = new Alenseo_Claude_API();
+                    $api_configured = $claude_api->is_api_configured();
+                }
+                
+                // Post-Typen abrufen
+                $post_types = get_post_types(array(
+                    'public' => true
+                ), 'objects');
+                
+                // Alle Beiträge und Seiten abrufen
+                $posts = $this->get_all_posts();
+                
+                // Template einbinden
+                include_once $template_file;
+            } else {
+                // Fallback, wenn Template nicht gefunden wird
+                echo '<div class="wrap"><h1>' . __('SEO-Optimierung', 'alenseo') . '</h1>';
+                echo '<div class="notice notice-error"><p>' . __('Optimizer-Template konnte nicht geladen werden.', 'alenseo') . '</p></div>';
+                echo '</div>';
+            }
+        } catch (Exception $e) {
+            error_log('Alenseo Dashboard - Fehler beim Rendern der Optimizer-Seite: ' . $e->getMessage());
+            
+            // Fehlerausgabe für Administratoren
+            echo '<div class="wrap"><h1>' . __('SEO-Optimierung', 'alenseo') . '</h1>';
+            echo '<div class="notice notice-error"><p>' . __('Fehler beim Laden der Optimizer-Seite: ', 'alenseo') . esc_html($e->getMessage()) . '</p></div>';
+            echo '</div>';
+        }
+    }
+    
+    /**
      * Alle Beiträge und Seiten abrufen
      * 
      * @param array $args Zusätzliche Abfrage-Argumente

@@ -170,7 +170,7 @@ class Alenseo_Content_Optimizer {
         $prompt = $this->build_meta_description_prompt($post, $keyword, $current_meta_description, $options);
         
         // API-Anfrage
-        $response = $->claude_api->generate_text($prompt);
+        $response = $this->claude_api->generate_text($prompt);
         
         // Fehler prüfen
         if (is_wp_error($response)) {

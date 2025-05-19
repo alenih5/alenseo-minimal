@@ -161,6 +161,39 @@ class Alenseo_Claude_API {
     }
     
     /**
+     * Prüft, ob der API-Schlüssel konfiguriert ist
+     * 
+     * @return bool True wenn API-Schlüssel konfiguriert ist, sonst False
+     */
+    public function is_api_configured() {
+        return !empty($this->api_key);
+    }
+    
+    /**
+     * API-Schlüssel testen (Alias für test_key für bessere Lesbarkeit)
+     * 
+     * @return bool|WP_Error true bei Erfolg, WP_Error bei Fehler
+     */
+    public function test_api_key() {
+        return $this->test_key();
+    }
+    
+    /**
+     * Verfügbare Modelle abrufen
+     * 
+     * @return array Liste der verfügbaren Claude-Modelle
+     */
+    public function get_available_models() {
+        return array(
+            'claude-3-opus-20240229' => 'Claude 3 Opus',
+            'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
+            'claude-3-haiku-20240307' => 'Claude 3 Haiku',
+            'claude-2.0' => 'Claude 2',
+            'claude-instant-1.2' => 'Claude Instant'
+        );
+    }
+    
+    /**
      * Text mit Claude generieren
      * 
      * @param string $prompt Der Prompt für Claude

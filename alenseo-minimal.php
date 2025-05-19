@@ -20,21 +20,36 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Prüfen, ob bereits eine Version des Plugins aktiv ist
+if (defined('ALENSEO_MINIMAL_VERSION')) {
+    // Warnung ausgeben, wenn wir uns nicht im Aktivierungsprozess befinden
+    if (!in_array(basename($_SERVER['PHP_SELF']), array('plugins.php'))) {
+        add_action('admin_notices', function() {
+            echo '<div class="error"><p>';
+            echo 'Eine andere Version von Alenseo SEO ist bereits aktiv. Bitte deaktivieren Sie alle anderen Versionen des Plugins, bevor Sie diese Version aktivieren.';
+            echo '</p></div>';
+        });
+    }
+    
+    // Plugin nicht weiter laden
+    return;
+}
+
 // Fehlerbehandlung aktivieren
-if (!function_exists('alenseo_error_handler')) {
-    function alenseo_error_handler($errno, $errstr, $errfile, $errline) {
+if (!function_exists('alenseo_error_handler_v2')) {
+    function alenseo_error_handler_v2($errno, $errstr, $errfile, $errline) {
         error_log("Alenseo Error: {$errstr} in {$errfile} on line {$errline}");
         return false; // Standard-PHP-Fehlerbehandlung fortsetzen lassen
     }
 }
-set_error_handler('alenseo_error_handler', E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+set_error_handler('alenseo_error_handler_v2', E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 
 define('ALENSEO_MINIMAL_DIR', plugin_dir_path(__FILE__));
 define('ALENSEO_MINIMAL_URL', plugin_dir_url(__FILE__));
-define('ALENSEO_MINIMAL_VERSION', '1.0.0');
+define('ALENSEO_MINIMAL_VERSION', '1.0.1');  // Version hochzählen
 
 // Sichere Datei-Einbindung
-function alenseo_require_file($file) {
+function alenseo_require_file_v2($file) {
     $file_path = ALENSEO_MINIMAL_DIR . $file;
     if (file_exists($file_path)) {
         require_once $file_path;
@@ -62,7 +77,7 @@ $required_files = array(
 
 $missing_files = array();
 foreach ($required_files as $file) {
-    if (!alenseo_require_file($file)) {
+    if (!alenseo_require_file_v2($file)) {
         $missing_files[] = $file;
     }
 }
