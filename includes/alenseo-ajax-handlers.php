@@ -2,72 +2,120 @@
 /**
  * AJAX-Handler für Alenseo SEO
  *
- * @link       https://imponi.ch
+ * Diese Datei enthält alle AJAX-Handler für die Grundfunktionen
+ * 
+ * @link       https://www.imponi.ch
  * @since      1.0.0
  *
  * @package    Alenseo
  * @subpackage Alenseo/includes
  */
 
-// Sicherheitsüberprüfung
+// Direkter Zugriff verhindern
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
 /**
- * AJAX-Handler für das Generieren von Keywords
+ * AJAX-Handler für die Analyse eines Posts
  */
-function alenseo_generate_keywords() {
-    // Überprüfe den Nonce-Wert für Sicherheit
+function alenseo_analyze_post_ajax() {
+    // Nonce prüfen
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'alenseo_ajax_nonce')) {
-        wp_send_json_error(array('message' => __('Sicherheitsüberprüfung fehlgeschlagen.', 'alenseo')));
+        wp_send_json_error(array('message' => 'Sicherheitsüberprüfung fehlgeschlagen.'));
         return;
     }
     
-    // Überprüfe Berechtigungen
+    // Benutzerrechte prüfen
     if (!current_user_can('edit_posts')) {
-        wp_send_json_error(array('message' => __('Keine ausreichenden Berechtigungen.', 'alenseo')));
+        wp_send_json_error(array('message' => 'Unzureichende Berechtigungen.'));
         return;
     }
     
-    // Post-ID aus der Anfrage holen
-    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
-    
-    if (!$post_id) {
-        wp_send_json_error(array('message' => __('Ungültige Post-ID.', 'alenseo')));
+    // Erforderliche Parameter prüfen
+    if (!isset($_POST['post_id'])) {
+        wp_send_json_error(array('message' => 'Fehlende Post-ID.'));
         return;
     }
     
-    // Prüfen, ob Claude API konfiguriert ist und verwenden, wenn ja
-    $settings = get_option('alenseo_settings', array());
-    $api_key = isset($settings['claude_api_key']) ? $settings['claude_api_key'] : '';
+    $post_id = intval($_POST['post_id']);
     
-    if (!empty($api_key) && file_exists(ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php')) {
-        // Claude API verwenden (wird in alenseo-claude-ajax.php implementiert)
-        require_once ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php';
-        $claude_api = new Alenseo_Claude_API();
-        $result = $claude_api->generate_keywords($post_id);
+    try {
+        // Analyzer erstellen
+        if (!class_exists('Alenseo_Minimal_Analysis')) {
+            require_once ALENSEO_MINIMAL_DIR . 'includes/class-minimal-analysis.php';
+        }
         
-        if ($result['success']) {
-            wp_send_json_success(array(
-                'keywords' => $result['keywords']
-            ));
+        $analyzer = new Alenseo_Minimal_Analysis();
+        
+        // Analyse durchführen
+        $result = $analyzer->analyze_post($post_id);
+        
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
             return;
         }
+        
+        // Erfolgreich
+        wp_send_json_success(array(
+            'message' => 'Analyse erfolgreich durchgeführt.',
+            'score' => get_post_meta($post_id, '_alenseo_seo_score', true),
+            'status' => get_post_meta($post_id, '_alenseo_seo_status', true)
+        ));
+        
+    } catch (Exception $e) {
+        // Fehlerbehandlung
+        error_log('Alenseo SEO - AJAX-Fehler: ' . $e->getMessage());
+        wp_send_json_error(array('message' => 'Fehler bei der Analyse: ' . $e->getMessage()));
     }
-    
-    // Fallback: Lokale Keyword-Generierung
-    require_once ALENSEO_MINIMAL_DIR . 'includes/class-minimal-analysis.php';
-    $analysis = new Alenseo_Minimal_Analysis();
-    $keywords = $analysis->generate_keywords($post_id);
-    
-    if (empty($keywords)) {
-        wp_send_json_error(array('message' => __('Keine Keywords gefunden.', 'alenseo')));
+}
+add_action('wp_ajax_alenseo_analyze_post', 'alenseo_analyze_post_ajax');
+
+/**
+ * AJAX-Handler zum Speichern eines Keywords
+ */
+function alenseo_save_keyword_ajax() {
+    // Nonce prüfen
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'alenseo_ajax_nonce')) {
+        wp_send_json_error(array('message' => 'Sicherheitsüberprüfung fehlgeschlagen.'));
         return;
     }
     
-    wp_send_json_success(array(
-        'keywords' => $keywords
-    ));
+    // Benutzerrechte prüfen
+    if (!current_user_can('edit_posts')) {
+        wp_send_json_error(array('message' => 'Unzureichende Berechtigungen.'));
+        return;
+    }
+    
+    // Erforderliche Parameter prüfen
+    if (!isset($_POST['post_id']) || !isset($_POST['keyword'])) {
+        wp_send_json_error(array('message' => 'Fehlende Parameter.'));
+        return;
+    }
+    
+    $post_id = intval($_POST['post_id']);
+    $keyword = sanitize_text_field($_POST['keyword']);
+    
+    // Post-Existenz prüfen
+    $post = get_post($post_id);
+    if (!$post) {
+        wp_send_json_error(array('message' => 'Beitrag nicht gefunden.'));
+        return;
+    }
+    
+    // Keyword speichern
+    $result = update_post_meta($post_id, '_alenseo_keyword', $keyword);
+    
+    if (false !== $result) {
+        // Nach dem Speichern eine neue Analyse durchführen
+        if (class_exists('Alenseo_Minimal_Analysis')) {
+            $analyzer = new Alenseo_Minimal_Analysis();
+            $analyzer->analyze_post($post_id);
+        }
+        
+        wp_send_json_success(array('message' => 'Keyword erfolgreich gespeichert.'));
+    } else {
+        wp_send_json_error(array('message' => 'Fehler beim Speichern des Keywords.'));
+    }
 }
-add_action('wp_ajax_alenseo_generate_keywords', 'alenseo_generate_keywords');
+add_action('wp_ajax_alenseo_save_keyword', 'alenseo_save_keyword_ajax');
