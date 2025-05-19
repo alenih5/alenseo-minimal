@@ -1,11 +1,12 @@
 <?php
 /**
  * Plugin Name: Alenseo SEO Minimal
- * Plugin URI: https://imponi.ch
- * Description: Ein schlankes SEO-Plugin mit Claude API-Integration für WordPress
+ * Plugin URI: https://www.imponi.ch
+ * Description: Ein schlankes SEO-Plugin mit Claude AI-Integration für WordPress
  * Version: 1.0.0
- * Author: Alenseo
- * Author URI: https://imponi.ch
+ * Author: Alen
+ * Author URI: https://www.imponi.ch
+ * Company: Imponi Bern-Worb GmbH
  * Text Domain: alenseo
  * Domain Path: /languages
  */
@@ -118,6 +119,14 @@ function alenseo_minimal_init() {
                     alenseo_log("Alenseo SEO Minimal: Claude API-Datei nicht gefunden: $claude_api_file");
                 }
                 
+                // Content Optimizer-Klasse laden, wenn die Datei existiert
+                $content_optimizer_file = ALENSEO_MINIMAL_DIR . 'includes/class-content-optimizer.php';
+                if (file_exists($content_optimizer_file)) {
+                    require_once $content_optimizer_file;
+                } else {
+                    alenseo_log("Alenseo SEO Minimal: Content Optimizer-Datei nicht gefunden: $content_optimizer_file");
+                }
+                
                 // WPBakery-Integration laden, wenn die Datei existiert
                 $wpbakery_file = ALENSEO_MINIMAL_DIR . 'includes/class-wpbakery-integration.php';
                 if (file_exists($wpbakery_file)) {
@@ -194,7 +203,7 @@ function alenseo_register_dashboard() {
 /**
  * Admin-Assets laden
  */
-function alenseo_minimal_admin_enqueue_scripts() {
+function alenseo_minimal_admin_enqueue_scripts($hook) {
     // Nur im Admin-Bereich laden
     if (!is_admin()) {
         return;
@@ -220,6 +229,38 @@ function alenseo_minimal_admin_enqueue_scripts() {
                 ALENSEO_MINIMAL_VERSION,
                 true
             );
+        }
+        
+        // Page Detail CSS - nur auf der Optimizer-Seite laden
+        if (strpos($hook, 'alenseo-optimizer') !== false && file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/page-detail.css')) {
+            wp_enqueue_style(
+                'alenseo-page-detail-css',
+                ALENSEO_MINIMAL_URL . 'assets/css/page-detail.css',
+                array(),
+                ALENSEO_MINIMAL_VERSION
+            );
+        }
+        
+        // Page Detail JS - nur auf der Optimizer-Seite laden
+        if (strpos($hook, 'alenseo-optimizer') !== false && file_exists(ALENSEO_MINIMAL_DIR . 'assets/js/page-detail.js')) {
+            wp_enqueue_script(
+                'alenseo-page-detail-js',
+                ALENSEO_MINIMAL_URL . 'assets/js/page-detail.js',
+                array('jquery'),
+                ALENSEO_MINIMAL_VERSION,
+                true
+            );
+            
+            // AJAX-Daten für JavaScript
+            wp_localize_script('alenseo-page-detail-js', 'alenseoData', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('alenseo_ajax_nonce'),
+                'messages' => array(
+                    'optimizing' => __('Optimiere Inhalt...', 'alenseo'),
+                    'success' => __('Optimierung erfolgreich!', 'alenseo'),
+                    'error' => __('Fehler bei der Optimierung. Bitte versuche es erneut.', 'alenseo')
+                )
+            ));
         }
     } catch (Exception $e) {
         alenseo_log("Alenseo SEO Minimal Fehler beim Laden der Admin-Assets: " . $e->getMessage());
