@@ -1,0 +1,398 @@
+<?php
+/**
+ * Template für die zentrale SEO-Optimierung
+ *
+ * @link       https://imponi.ch
+ * @since      1.0.0
+ *
+ * @package    Alenseo
+ * @subpackage Alenseo/templates
+ */
+
+// Direkter Zugriff verhindern
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Claude API verfügbar?
+$settings = get_option('alenseo_settings', array());
+$claude_api_active = !empty($settings['claude_api_key']);
+
+// Inhalte für das Dashboard abrufen
+$contents_data = $this->get_contents_for_dashboard();
+$contents = $contents_data['contents'];
+$total = $contents_data['total'];
+
+// Statistiken abrufen
+$stats = $this->get_content_statistics();
+
+// Post-Typen für Filter abrufen
+$post_types = isset($settings['post_types']) ? $settings['post_types'] : array('post', 'page');
+$post_type_objects = array();
+foreach ($post_types as $post_type) {
+    $object = get_post_type_object($post_type);
+    if ($object) {
+        $post_type_objects[$post_type] = $object->labels->singular_name;
+    }
+}
+
+?>
+<div class="wrap alenseo-optimizer-wrap">
+    <h1 class="wp-heading-inline">
+        <span class="dashicons dashicons-superhero"></span>
+        <?php _e('Alenseo SEO-Optimierung', 'alenseo'); ?>
+    </h1>
+    
+    <?php if (!$claude_api_active) : ?>
+    <div class="notice notice-warning">
+        <p>
+            <?php _e('Claude API ist nicht konfiguriert. Um die KI-gestützten Optimierungsfunktionen zu nutzen, bitte', 'alenseo'); ?>
+            <a href="<?php echo admin_url('admin.php?page=alenseo-minimal-settings'); ?>"><?php _e('konfiguriere den API-Schlüssel in den Einstellungen', 'alenseo'); ?></a>.
+        </p>
+    </div>
+    <?php endif; ?>
+    
+    <div class="alenseo-dashboard-header">
+        <div class="alenseo-stats-overview">
+            <div class="alenseo-stat-box alenseo-stat-box-primary">
+                <div class="alenseo-stat-box-header">
+                    <h3><?php _e('SEO-Score', 'alenseo'); ?></h3>
+                </div>
+                <div class="alenseo-stat-box-content">
+                    <div class="alenseo-stat-circle" data-percentage="<?php echo esc_attr($stats['avg_score']); ?>">
+                        <span class="alenseo-stat-value"><?php echo esc_html($stats['avg_score']); ?></span>
+                    </div>
+                    <div class="alenseo-stat-description">
+                        <?php _e('Durchschnittlicher Score', 'alenseo'); ?>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alenseo-stat-box">
+                <div class="alenseo-stat-box-header">
+                    <h3><?php _e('Status', 'alenseo'); ?></h3>
+                </div>
+                <div class="alenseo-stat-box-content">
+                    <div class="alenseo-stat-bars">
+                        <div class="alenseo-stat-bar">
+                            <div class="alenseo-stat-bar-label">
+                                <span class="status-good"></span>
+                                <?php _e('Gut optimiert', 'alenseo'); ?>
+                            </div>
+                            <div class="alenseo-stat-bar-progress">
+                                <div class="alenseo-stat-bar-fill alenseo-bar-good" style="width: <?php echo esc_attr($stats['total'] > 0 ? ($stats['optimized'] / $stats['total'] * 100) : 0); ?>%"></div>
+                            </div>
+                            <div class="alenseo-stat-bar-value"><?php echo esc_html($stats['optimized']); ?></div>
+                        </div>
+                        
+                        <div class="alenseo-stat-bar">
+                            <div class="alenseo-stat-bar-label">
+                                <span class="status-ok"></span>
+                                <?php _e('Teilweise optimiert', 'alenseo'); ?>
+                            </div>
+                            <div class="alenseo-stat-bar-progress">
+                                <div class="alenseo-stat-bar-fill alenseo-bar-ok" style="width: <?php echo esc_attr($stats['total'] > 0 ? ($stats['partially_optimized'] / $stats['total'] * 100) : 0); ?>%"></div>
+                            </div>
+                            <div class="alenseo-stat-bar-value"><?php echo esc_html($stats['partially_optimized']); ?></div>
+                        </div>
+                        
+                        <div class="alenseo-stat-bar">
+                            <div class="alenseo-stat-bar-label">
+                                <span class="status-poor"></span>
+                                <?php _e('Optimierung nötig', 'alenseo'); ?>
+                            </div>
+                            <div class="alenseo-stat-bar-progress">
+                                <div class="alenseo-stat-bar-fill alenseo-bar-poor" style="width: <?php echo esc_attr($stats['total'] > 0 ? ($stats['needs_optimization'] / $stats['total'] * 100) : 0); ?>%"></div>
+                            </div>
+                            <div class="alenseo-stat-bar-value"><?php echo esc_html($stats['needs_optimization']); ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alenseo-stat-box">
+                <div class="alenseo-stat-box-header">
+                    <h3><?php _e('Fortschritt', 'alenseo'); ?></h3>
+                </div>
+                <div class="alenseo-stat-box-content">
+                    <div class="alenseo-progress-stats">
+                        <div class="alenseo-progress-item">
+                            <div class="alenseo-progress-label"><?php _e('Mit Keywords', 'alenseo'); ?></div>
+                            <div class="alenseo-progress-bar">
+                                <div class="alenseo-progress-fill" style="width: <?php echo esc_attr($stats['total'] > 0 ? ($stats['with_keyword'] / $stats['total'] * 100) : 0); ?>%"></div>
+                            </div>
+                            <div class="alenseo-progress-value"><?php echo esc_html($stats['with_keyword']); ?> / <?php echo esc_html($stats['total']); ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="alenseo-bulk-actions-bar">
+        <div class="alenseo-search-filter">
+            <div class="alenseo-filter-group">
+                <label for="alenseo-filter-post-type"><?php _e('Typ:', 'alenseo'); ?></label>
+                <select id="alenseo-filter-post-type">
+                    <option value=""><?php _e('Alle', 'alenseo'); ?></option>
+                    <?php foreach ($post_type_objects as $post_type => $label) : ?>
+                        <option value="<?php echo esc_attr($post_type); ?>"><?php echo esc_html($label); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="alenseo-filter-group">
+                <label for="alenseo-filter-status"><?php _e('Status:', 'alenseo'); ?></label>
+                <select id="alenseo-filter-status">
+                    <option value=""><?php _e('Alle', 'alenseo'); ?></option>
+                    <option value="optimized"><?php _e('Gut optimiert', 'alenseo'); ?></option>
+                    <option value="partially_optimized"><?php _e('Teilweise optimiert', 'alenseo'); ?></option>
+                    <option value="needs_optimization"><?php _e('Optimierung nötig', 'alenseo'); ?></option>
+                </select>
+            </div>
+            
+            <div class="alenseo-filter-group">
+                <label for="alenseo-filter-keyword"><?php _e('Keyword:', 'alenseo'); ?></label>
+                <select id="alenseo-filter-keyword">
+                    <option value=""><?php _e('Alle', 'alenseo'); ?></option>
+                    <option value="with"><?php _e('Mit Keyword', 'alenseo'); ?></option>
+                    <option value="without"><?php _e('Ohne Keyword', 'alenseo'); ?></option>
+                </select>
+            </div>
+            
+            <div class="alenseo-search-group">
+                <input type="text" id="alenseo-search-input" placeholder="<?php esc_attr_e('Suchen...', 'alenseo'); ?>">
+                <button type="button" id="alenseo-search-button" class="button"><?php _e('Suchen', 'alenseo'); ?></button>
+            </div>
+        </div>
+        
+        <div class="alenseo-bulk-actions">
+            <div class="alenseo-bulk-actions-select">
+                <select id="alenseo-bulk-action">
+                    <option value=""><?php _e('Massenaktionen', 'alenseo'); ?></option>
+                    <option value="generate_keywords"><?php _e('Keywords generieren', 'alenseo'); ?></option>
+                    <option value="optimize_titles"><?php _e('Titel optimieren', 'alenseo'); ?></option>
+                    <option value="optimize_meta_descriptions"><?php _e('Meta-Beschreibungen optimieren', 'alenseo'); ?></option>
+                    <option value="optimize_content"><?php _e('Inhalte optimieren', 'alenseo'); ?></option>
+                    <option value="optimize_all"><?php _e('Komplettoptimierung', 'alenseo'); ?></option>
+                </select>
+                <button type="button" id="alenseo-apply-bulk-action" class="button"><?php _e('Anwenden', 'alenseo'); ?></button>
+            </div>
+            
+            <div class="alenseo-selection-info" style="display: none;">
+                <span id="alenseo-selected-count">0</span> <?php _e('Elemente ausgewählt', 'alenseo'); ?>
+                <button type="button" id="alenseo-clear-selection" class="button button-link-delete"><?php _e('Auswahl aufheben', 'alenseo'); ?></button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="alenseo-progress-bar" class="alenseo-progress-bar-container" style="display: none;">
+        <div class="alenseo-progress-bar">
+            <div class="alenseo-progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="alenseo-progress-text"><?php _e('Optimiere...', 'alenseo'); ?> <span id="alenseo-progress-current">0</span>/<span id="alenseo-progress-total">0</span></div>
+    </div>
+    
+    <div class="alenseo-contents-table-container">
+        <table class="alenseo-contents-table widefat striped">
+            <thead>
+                <tr>
+                    <th class="check-column">
+                        <input type="checkbox" id="alenseo-select-all">
+                    </th>
+                    <th class="column-title"><?php _e('Titel', 'alenseo'); ?></th>
+                    <th class="column-type"><?php _e('Typ', 'alenseo'); ?></th>
+                    <th class="column-keyword"><?php _e('Fokus-Keyword', 'alenseo'); ?></th>
+                    <th class="column-score"><?php _e('SEO-Score', 'alenseo'); ?></th>
+                    <th class="column-status"><?php _e('Status', 'alenseo'); ?></th>
+                    <th class="column-actions"><?php _e('Aktionen', 'alenseo'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($contents)) : ?>
+                    <tr>
+                        <td colspan="7"><?php _e('Keine Inhalte gefunden.', 'alenseo'); ?></td>
+                    </tr>
+                <?php else : ?>
+                    <?php foreach ($contents as $content) : ?>
+                        <tr class="alenseo-content-row" 
+                            data-id="<?php echo esc_attr($content['id']); ?>"
+                            data-type="<?php echo esc_attr($content['type']); ?>"
+                            data-status="<?php echo esc_attr($content['seo_status']); ?>"
+                            data-has-keyword="<?php echo empty($content['focus_keyword']) ? 'without' : 'with'; ?>">
+                            <td class="check-column">
+                                <input type="checkbox" class="alenseo-select-content" value="<?php echo esc_attr($content['id']); ?>">
+                            </td>
+                            <td class="column-title">
+                                <strong>
+                                    <a href="<?php echo esc_url($content['edit_url']); ?>" class="row-title">
+                                        <?php echo esc_html($content['title']); ?>
+                                    </a>
+                                </strong>
+                                <div class="row-actions">
+                                    <span class="edit">
+                                        <a href="<?php echo esc_url($content['edit_url']); ?>"><?php _e('Bearbeiten', 'alenseo'); ?></a> | 
+                                    </span>
+                                    <span class="view">
+                                        <a href="<?php echo esc_url($content['view_url']); ?>" target="_blank"><?php _e('Ansehen', 'alenseo'); ?></a>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="column-type"><?php echo esc_html($content['type']); ?></td>
+                            <td class="column-keyword">
+                                <?php if (!empty($content['focus_keyword'])) : ?>
+                                    <span class="alenseo-keyword-badge"><?php echo esc_html($content['focus_keyword']); ?></span>
+                                <?php else : ?>
+                                    <span class="alenseo-no-keyword"><?php _e('Nicht gesetzt', 'alenseo'); ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="column-score">
+                                <div class="alenseo-score-pill <?php echo esc_attr($this->get_score_class($content['seo_score'])); ?>">
+                                    <?php echo esc_html($content['seo_score']); ?>
+                                </div>
+                            </td>
+                            <td class="column-status">
+                                <?php echo $this->get_status_html($content['seo_status']); ?>
+                            </td>
+                            <td class="column-actions">
+                                <div class="alenseo-actions">
+                                    <?php if ($claude_api_active) : ?>
+                                        <button type="button" class="button button-small alenseo-action-optimize" data-id="<?php echo esc_attr($content['id']); ?>" title="<?php esc_attr_e('Optimieren', 'alenseo'); ?>">
+                                            <span class="dashicons dashicons-superhero"></span>
+                                        </button>
+                                    <?php endif; ?>
+                                    <button type="button" class="button button-small alenseo-action-analyze" data-id="<?php echo esc_attr($content['id']); ?>" title="<?php esc_attr_e('Analysieren', 'alenseo'); ?>">
+                                        <span class="dashicons dashicons-visibility"></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="alenseo-pagination">
+        <?php if ($contents_data['max_pages'] > 1) : ?>
+            <div class="alenseo-pagination-pages">
+                <?php
+                $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+                for ($i = 1; $i <= min(5, $contents_data['max_pages']); $i++) {
+                    $class = $i === $current_page ? 'current' : '';
+                    echo '<a href="' . esc_url(add_query_arg('paged', $i)) . '" class="' . $class . '">' . $i . '</a>';
+                }
+                if ($contents_data['max_pages'] > 5) {
+                    echo '<span>...</span>';
+                    echo '<a href="' . esc_url(add_query_arg('paged', $contents_data['max_pages'])) . '">' . $contents_data['max_pages'] . '</a>';
+                }
+                ?>
+            </div>
+        <?php endif; ?>
+        
+        <div class="alenseo-items-per-page">
+            <label for="alenseo-per-page"><?php _e('Einträge pro Seite:', 'alenseo'); ?></label>
+            <select id="alenseo-per-page">
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Optimierungsdialog -->
+<div id="alenseo-optimization-dialog" class="alenseo-dialog" style="display: none;">
+    <div class="alenseo-dialog-content">
+        <div class="alenseo-dialog-header">
+            <h2><?php _e('Content optimieren', 'alenseo'); ?></h2>
+            <button type="button" class="alenseo-dialog-close">&times;</button>
+        </div>
+        <div class="alenseo-dialog-body">
+            <div class="alenseo-dialog-section alenseo-keywords-section">
+                <h3><?php _e('Fokus-Keyword', 'alenseo'); ?></h3>
+                <div class="alenseo-current-keyword">
+                    <p><?php _e('Aktuelles Keyword:', 'alenseo'); ?> <span id="alenseo-current-keyword-value"><?php _e('Nicht gesetzt', 'alenseo'); ?></span></p>
+                    <button type="button" class="button" id="alenseo-generate-keywords">
+                        <span class="dashicons dashicons-update"></span> <?php _e('Keywords generieren', 'alenseo'); ?>
+                    </button>
+                </div>
+                <div class="alenseo-keyword-suggestions" style="display: none;">
+                    <h4><?php _e('Vorschläge:', 'alenseo'); ?></h4>
+                    <div class="alenseo-keyword-list"></div>
+                </div>
+                <div class="alenseo-dialog-loader alenseo-keywords-loader" style="display: none;">
+                    <span class="spinner is-active"></span>
+                    <span><?php _e('Keywords werden generiert...', 'alenseo'); ?></span>
+                </div>
+            </div>
+            
+            <div class="alenseo-dialog-section alenseo-optimization-section">
+                <h3><?php _e('Optimierung', 'alenseo'); ?></h3>
+                <div class="alenseo-optimization-options">
+                    <p><?php _e('Wähle die Elemente, die optimiert werden sollen:', 'alenseo'); ?></p>
+                    <div class="alenseo-optimization-checkbox-grid">
+                        <label>
+                            <input type="checkbox" name="optimize_title" checked> <?php _e('Titel', 'alenseo'); ?>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="optimize_meta_description" checked> <?php _e('Meta-Description', 'alenseo'); ?>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="optimize_content" checked> <?php _e('Inhaltsvorschläge', 'alenseo'); ?>
+                        </label>
+                    </div>
+                    <div class="alenseo-optimization-actions">
+                        <button type="button" class="button button-primary" id="alenseo-start-optimization">
+                            <span class="dashicons dashicons-superhero"></span> <?php _e('Jetzt optimieren', 'alenseo'); ?>
+                        </button>
+                    </div>
+                    <div class="alenseo-dialog-loader alenseo-optimizer-loader" style="display: none;">
+                        <span class="spinner is-active"></span>
+                        <span><?php _e('Optimierungsvorschläge werden generiert...', 'alenseo'); ?></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alenseo-dialog-section alenseo-results-section" style="display: none;">
+                <h3><?php _e('Optimierungsergebnisse', 'alenseo'); ?></h3>
+                <div class="alenseo-results-container">
+                    <!-- Hier werden die Ergebnisse dynamisch eingefügt -->
+                </div>
+            </div>
+        </div>
+        <div class="alenseo-dialog-footer">
+            <button type="button" class="button alenseo-dialog-close"><?php _e('Schließen', 'alenseo'); ?></button>
+        </div>
+    </div>
+</div>
+
+<?php
+/**
+ * Hilfsfunktion, um die CSS-Klasse für einen Score zu bestimmen
+ */
+function get_score_class($score) {
+    if ($score >= 80) {
+        return 'score-good';
+    } elseif ($score >= 50) {
+        return 'score-ok';
+    } else {
+        return 'score-poor';
+    }
+}
+
+/**
+ * Hilfsfunktion, um das HTML für einen Status zu generieren
+ */
+function get_status_html($status) {
+    switch ($status) {
+        case 'optimized':
+            return '<span class="alenseo-status alenseo-status-good">' . __('Gut optimiert', 'alenseo') . '</span>';
+        case 'partially_optimized':
+            return '<span class="alenseo-status alenseo-status-ok">' . __('Teilweise optimiert', 'alenseo') . '</span>';
+        case 'needs_optimization':
+        default:
+            return '<span class="alenseo-status alenseo-status-poor">' . __('Optimierung nötig', 'alenseo') . '</span>';
+    }
+}
+?>
