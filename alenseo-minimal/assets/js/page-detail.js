@@ -1,33 +1,19 @@
 /**
+ * JavaScript für die Detailansicht einer einzelnen Seite
+ *
+ * @link       https://www.imponi.ch
+ * @since      1.0.0
+ *
+ * @package    Alenseo
+ */
 
-JavaScript für die Detailansicht einer einzelnen Seite
-@link https://www.imponi.ch
-@since 1.0.0
-@package Alenseo */
-(function($) { 'use strict';
-
-// Hauptfunktionalität der Detailansicht
-var AlenseoPageDetail = {
-    /**
-     * Initialisierung
-     */
-    init: function() {
-        // Variablen initialisieren
-        this.tabNavigation();
-        this.keywordManagement();
-        this.optimizationTools();
-        this.analyzeButtonHandlers();
-        this.advancedOptionsToggle();
-        
-        // Speichern und Neuladen nach Änderungen
-        this.saveAndReloadHandlers();
-    },
+jQuery(document).ready(function($) {
+    'use strict';
     
     /**
      * Tab-Navigation
      */
-    tabNavigation: function() {
-        // Tab-Klick-Handler
+    function initTabNavigation() {
         $('.alenseo-page-tabs .nav-tab').on('click', function(e) {
             e.preventDefault();
             
@@ -40,7 +26,7 @@ var AlenseoPageDetail = {
             $('.alenseo-tab-content').removeClass('active');
             $('#' + target).addClass('active');
             
-            // Hash in URL setzen (aber Seite nicht springen lassen)
+            // Hash in URL setzen
             if (history.pushState) {
                 history.pushState(null, null, '#' + target);
             } else {
@@ -56,14 +42,12 @@ var AlenseoPageDetail = {
                 tabLink.trigger('click');
             }
         }
-    },
+    }
     
     /**
      * Keyword-Management
      */
-    keywordManagement: function() {
-        var self = this;
-        
+    function initKeywordManagement() {
         // Keyword-Dialog öffnen
         $('.alenseo-change-keyword, .alenseo-set-keyword').on('click', function() {
             $('#alenseo-keyword-dialog').fadeIn(200);
@@ -162,6 +146,8 @@ var AlenseoPageDetail = {
             
             // Button deaktivieren
             button.prop('disabled', true);
+            var originalText = button.text();
+            button.text('Speichere...');
             
             // AJAX-Anfrage zum Speichern des Keywords
             $.ajax({
@@ -176,6 +162,7 @@ var AlenseoPageDetail = {
                 success: function(response) {
                     // Button reaktivieren
                     button.prop('disabled', false);
+                    button.text(originalText);
                     
                     if (response.success) {
                         // Dialog schließen
@@ -191,20 +178,19 @@ var AlenseoPageDetail = {
                 error: function() {
                     // Button reaktivieren
                     button.prop('disabled', false);
+                    button.text(originalText);
                     
                     // Fehlermeldung
                     alert('Fehler bei der Kommunikation mit dem Server.');
                 }
             });
         });
-    },
+    }
     
     /**
      * Optimierungstools und Vorschläge
      */
-    optimizationTools: function() {
-        var self = this;
-        
+    function initOptimizationTools() {
         // Einzelne Optimierungs-Button-Handler
         $('.alenseo-optimize-button').on('click', function() {
             var button = $(this);
@@ -341,7 +327,7 @@ var AlenseoPageDetail = {
             $(this).closest('.alenseo-optimization-result').hide();
         });
         
-        // Alle optimieren
+        // Alle optimieren (Bulk-Optimize-Button)
         $('.alenseo-optimize-all-button, .alenseo-bulk-optimize-button').on('click', function() {
             var button = $(this);
             var postId = button.data('post-id');
@@ -460,12 +446,12 @@ var AlenseoPageDetail = {
                 }
             });
         });
-    },
+    }
     
     /**
      * Analyse-Button-Handler
      */
-    analyzeButtonHandlers: function() {
+    function initAnalyzeButtonHandlers() {
         // Analyse-Button-Klick
         $('.alenseo-analyze-button').on('click', function() {
             var button = $(this);
@@ -509,12 +495,12 @@ var AlenseoPageDetail = {
                 }
             });
         });
-    },
+    }
     
     /**
      * Erweiterte Optionen ein-/ausblenden
      */
-    advancedOptionsToggle: function() {
+    function initAdvancedOptionsToggle() {
         $('.alenseo-toggle-advanced').on('click', function(e) {
             e.preventDefault();
             
@@ -529,19 +515,42 @@ var AlenseoPageDetail = {
                 icon.removeClass('dashicons-arrow-right-alt2').addClass('dashicons-arrow-down-alt2');
             }
         });
-    },
+    }
     
     /**
-     * Nach Änderungen speichern und Seite neuladen
+     * Initialisierung aller Funktionen
      */
-    saveAndReloadHandlers: function() {
-        // Analysieren, neu laden usw.
+    function init() {
+        // Tab-Navigation initialisieren
+        initTabNavigation();
+        
+        // Keyword-Management initialisieren
+        initKeywordManagement();
+        
+        // Optimierungstools initialisieren
+        initOptimizationTools();
+        
+        // Analyse-Button-Handler initialisieren
+        initAnalyzeButtonHandlers();
+        
+        // Erweiterte Optionen Toggle initialisieren
+        initAdvancedOptionsToggle();
+        
+        // ESC-Taste zum Schließen von Dialogen
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape') {
+                $('.alenseo-dialog').fadeOut(200);
+            }
+        });
+        
+        // Klick außerhalb des Dialogs zum Schließen
+        $(document).on('click', '.alenseo-dialog', function(e) {
+            if ($(e.target).hasClass('alenseo-dialog')) {
+                $(this).fadeOut(200);
+            }
+        });
     }
-};
-
-// Initialisierung beim Laden des Dokuments
-$(document).ready(function() {
-    AlenseoPageDetail.init();
+    
+    // Funktionen initialisieren
+    init();
 });
-})(jQuery);
-
