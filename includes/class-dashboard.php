@@ -410,8 +410,27 @@ class Alenseo_Dashboard {
         
         // Abfrage ausführen
         $query = new WP_Query($query_args);
+        $posts = $query->posts;
         
-        return $query->posts;
+        // Erweiterte Post-Daten hinzufügen
+        $result = array();
+        foreach ($posts as $post) {
+            // SEO-Daten abrufen
+            $seo_data = $this->get_post_seo_data($post->ID);
+            
+            // Objekt mit allen Daten erstellen
+            $post_obj = $post;
+            $post_obj->seo_score = $seo_data['score'];
+            $post_obj->seo_status = $seo_data['status'];
+            $post_obj->seo_status_label = $seo_data['status_text'];
+            $post_obj->keyword = $seo_data['keyword'];
+            $post_obj->meta_description = $seo_data['meta_description'];
+            $post_obj->permalink = get_permalink($post->ID);
+            
+            $result[] = $post_obj;
+        }
+        
+        return $result;
     }
     
     /**
