@@ -1,0 +1,217 @@
+/**
+ * Grundlegende Stile für das Dashboard mit Fallback-Funktionen
+ * Diese minimierte Version stellt sicher, dass das Dashboard auch funktioniert,
+ * wenn die Haupt-CSS-Datei nicht geladen werden kann
+ */
+
+.alenseo-notice {
+    padding: 10px 15px;
+    margin: 10px 0;
+    border-left: 4px solid #0073aa;
+    background: #f7f7f7;
+}
+
+.alenseo-notice.notice-error {
+    border-left-color: #dc3232;
+}
+
+.alenseo-notice.notice-warning {
+    border-left-color: #ffb900;
+}
+
+.alenseo-notice.notice-success {
+    border-left-color: #46b450;
+}
+
+.alenseo-error {
+    color: #dc3232;
+}
+
+/* Score Anzeige */
+.alenseo-score-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+    color: white;
+    margin: 0 auto;
+}
+
+.alenseo-score-circle.score-good {
+    background-color: #46b450;
+}
+
+.alenseo-score-circle.score-ok {
+    background-color: #ffb900; 
+}
+
+.alenseo-score-circle.score-poor {
+    background-color: #dc3232;
+}
+
+/* Status Badges */
+.alenseo-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.alenseo-status-good {
+    background-color: #eaf9eb;
+    color: #46b450;
+}
+
+.alenseo-status-ok {
+    background-color: #fff8e5;
+    color: #ffb900;
+}
+
+.alenseo-status-poor {
+    background-color: #fbeaea;
+    color: #dc3232;
+}
+
+/* Keyword Badges */
+.alenseo-keyword-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #333;
+}
+
+.alenseo-no-keyword {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* Buttons & Actions */
+.alenseo-action-button {
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Spinner Animation */
+@keyframes rotation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.alenseo-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-top-color: #333;
+    border-radius: 50%;
+    animation: rotation 1s linear infinite;
+}
+
+/* Dashboard Grundlayout */
+.alenseo-dashboard-header {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #ccc;
+}
+
+.alenseo-bulk-actions-bar {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ccc;
+}
+
+.alenseo-contents-table-container {
+    background: #fff;
+    border: 1px solid #ccc;
+    overflow-x: auto;
+}
+
+.alenseo-contents-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.alenseo-contents-table th,
+.alenseo-contents-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Dialog */
+.alenseo-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alenseo-dialog-content {
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.alenseo-dialog-header {
+    padding: 15px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alenseo-dialog-body {
+    padding: 15px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.alenseo-dialog-footer {
+    padding: 15px;
+    background: #f5f5f5;
+    border-top: 1px solid #ddd;
+    text-align: right;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 782px) {
+    .alenseo-bulk-actions-bar {
+        flex-direction: column;
+    }
+    
+    .alenseo-search-filter,
+    .alenseo-bulk-actions {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .alenseo-dialog-content {
+        width: 95%;
+    }
+}
