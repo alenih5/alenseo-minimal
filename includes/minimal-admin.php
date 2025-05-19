@@ -31,9 +31,6 @@ class Alenseo_Minimal_Admin {
         // Meta-Box-Daten speichern
         add_action('save_post', array($this, 'save_meta_box_data'));
         
-        // Admin-Menü hinzufügen (falls nicht bereits durch Dashboard-Klasse)
-        add_action('admin_menu', array($this, 'add_admin_menu'));
-        
         // Admin-Assets laden
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
     }

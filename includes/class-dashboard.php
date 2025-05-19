@@ -1,7 +1,6 @@
 <?php
 /**
- * Dashboard-Klasse für Alenseo SEO
- *
+ * Dashboard-Klasse für Alenseo
  * Diese Klasse enthält die Funktionalität für das SEO-Dashboard
  * und die Detailansicht
  * 
@@ -39,51 +38,50 @@ class Alenseo_Dashboard {
     public function register_admin_menu() {
         try {
             // Hauptmenüpunkt
-            $parent_slug = 'alenseo-optimizer';
+            $capability = 'manage_options';
+            $parent_slug = 'alenseo-seo';
             
-            // Dashboard-Seite
+            // Hauptseite (Dashboard)
             add_menu_page(
                 __('Alenseo SEO', 'alenseo'),
                 __('Alenseo SEO', 'alenseo'),
-                'edit_posts',
+                $capability,
                 $parent_slug,
                 array($this, 'render_dashboard_page'),
-                'dashicons-chart-bar',
-                80
+                'dashicons-chart-bar'
             );
             
-            // Optimizer-Unterseite (gleich wie Hauptseite)
+            // Untermenü: Dashboard (um es als ersten Eintrag zu haben)
             add_submenu_page(
                 $parent_slug,
-                __('SEO Optimizer', 'alenseo'),
-                __('Optimizer', 'alenseo'),
-                'edit_posts',
-                $parent_slug,
-                array($this, 'render_dashboard_page')
+                __('Dashboard', 'alenseo'),
+                __('Dashboard', 'alenseo'),
+                $capability,
+                $parent_slug
             );
             
-            // Detailansicht-Seite (versteckt)
-            add_submenu_page(
-                null, // nicht im Menü anzeigen
-                __('Seiten-Details', 'alenseo'),
-                __('Seiten-Details', 'alenseo'),
-                'edit_posts',
-                'alenseo-page-detail',
-                array($this, 'render_page_detail')
-            );
-            
-            // Einstellungen-Seite
+            // Untermenü: SEO-Optimierung
             add_submenu_page(
                 $parent_slug,
-                __('Alenseo Einstellungen', 'alenseo'),
+                __('SEO-Optimierung', 'alenseo'),
+                __('SEO-Optimierung', 'alenseo'),
+                $capability,
+                'alenseo-optimizer',
+                array($this, 'render_optimizer_page')
+            );
+            
+            // Untermenü: Einstellungen
+            add_submenu_page(
+                $parent_slug,
                 __('Einstellungen', 'alenseo'),
-                'manage_options',
-                'alenseo-minimal-settings',
+                __('Einstellungen', 'alenseo'),
+                $capability,
+                'alenseo-settings',
                 array($this, 'render_settings_page')
             );
             
         } catch (Exception $e) {
-            error_log('Alenseo Dashboard - Fehler beim Registrieren des Admin-Menüs: ' . $e->getMessage());
+            error_log('Alenseo SEO - Fehler beim Registrieren des Admin-Menüs: ' . $e->getMessage());
         }
     }
     
@@ -411,40 +409,57 @@ class Alenseo_Dashboard {
      * @return array Übersichtsdaten
      */
     public function get_overview_data() {
+        // Verwende Transient für bessere Performance
+        $cache_key = 'alenseo_overview_data';
+        $cached_data = get_transient($cache_key);
+        
+        if ($cached_data !== false) {
+            return $cached_data;
+        }
+        
         $data = array(
-            'total_posts' => 0,
-            'optimized_posts' => 0,
-            'partially_optimized_posts' => 0,
-            'unoptimized_posts' => 0,
-            'not_analyzed_posts' => 0,
-            'average_score' => 0
+            'total_count' => 0,
+            'optimized_count' => 0,
+            'needs_improvement_count' => 0,
+            'no_keyword_count' => 0,
+            'average_score' => 0,
+            'best_performing' => array(),
+            'worst_performing' => array()
         );
         
         // Alle Beiträge abrufen
         $posts = $this->get_all_posts();
-        $data['total_posts'] = count($posts);
+        $data['total_count'] = count($posts);
         
-        if ($data['total_posts'] > 0) {
+        if ($data['total_count'] > 0) {
             $score_sum = 0;
             $analyzed_posts = 0;
+            $post_scores = array(); // Array für Sortierung nach Score
             
             foreach ($posts as $post) {
                 $post_data = $this->get_post_seo_data($post->ID);
                 $score = $post_data['score'];
+                $has_keyword = !empty($post_data['keyword']);
                 
-                if ($score > 0) {
+                if (!$has_keyword) {
+                    $data['no_keyword_count']++;
+                } elseif ($score > 0) {
                     $score_sum += $score;
                     $analyzed_posts++;
                     
-                    if ($score >= 80) {
-                        $data['optimized_posts']++;
-                    } elseif ($score >= 50) {
-                        $data['partially_optimized_posts']++;
+                    if ($score >= 70) {
+                        $data['optimized_count']++;
                     } else {
-                        $data['unoptimized_posts']++;
+                        $data['needs_improvement_count']++;
                     }
-                } else {
-                    $data['not_analyzed_posts']++;
+                    
+                    // Für Top/Flop-Posts speichern
+                    $post_scores[] = array(
+                        'id' => $post->ID,
+                        'title' => $post->post_title,
+                        'score' => $score,
+                        'url' => get_edit_post_link($post->ID),
+                    );
                 }
             }
             
@@ -452,7 +467,25 @@ class Alenseo_Dashboard {
             if ($analyzed_posts > 0) {
                 $data['average_score'] = round($score_sum / $analyzed_posts);
             }
+            
+            // Top und Flop Posts ermitteln
+            if (!empty($post_scores)) {
+                // Nach Score sortieren
+                usort($post_scores, function($a, $b) {
+                    return $b['score'] - $a['score']; // absteigend
+                });
+                
+                // Top 5 Posts
+                $data['best_performing'] = array_slice($post_scores, 0, 5);
+                
+                // Flop 5 Posts (die schlechtesten, aber nur mit Keywords)
+                $worst_performers = array_reverse($post_scores); // aufsteigend
+                $data['worst_performing'] = array_slice($worst_performers, 0, 5);
+            }
         }
+        
+        // In Transient speichern (1 Stunde gültig)
+        set_transient($cache_key, $data, HOUR_IN_SECONDS);
         
         return $data;
     }
@@ -501,5 +534,69 @@ class Alenseo_Dashboard {
      */
     public function get_status_badge_html($status, $status_text) {
         return '<div class="alenseo-status alenseo-status-' . esc_attr($status) . '">' . esc_html($status_text) . '</div>';
+    }
+
+    /**
+     * API-Nutzungsstatistiken abrufen
+     * 
+     * @return array API-Nutzungsstatistiken
+     */
+    public function get_api_usage_stats() {
+        $stats = array(
+            'requests_today' => 0,
+            'daily_limit' => 50, // Standard-Tageslimit
+            'tokens_used' => 0,
+            'monthly_limit' => 100000, // Standard-Monatslimit
+            'cache_hit_percentage' => 0,
+            'status' => 'ok',
+            'status_message' => __('Betriebsbereit', 'alenseo')
+        );
+        
+        // Einstellungen laden
+        $settings = get_option('alenseo_settings', array());
+        
+        // Tageslimits aus den Einstellungen übernehmen
+        if (isset($settings['api_daily_limit'])) {
+            $stats['daily_limit'] = intval($settings['api_daily_limit']);
+        }
+        
+        if (isset($settings['api_monthly_limit'])) {
+            $stats['monthly_limit'] = intval($settings['api_monthly_limit']);
+        }
+        
+        // Rate-Limits aus der Datenbank abrufen
+        $rate_limits = get_transient('alenseo_claude_rate_limits');
+        if ($rate_limits !== false) {
+            // Anfragen von heute zählen
+            $today_start = strtotime('today midnight');
+            if ($rate_limits['reset_time'] > $today_start) {
+                $stats['requests_today'] = $rate_limits['requests'];
+            }
+            
+            // Token-Nutzung
+            $stats['tokens_used'] = $rate_limits['tokens'];
+        }
+        
+        // Cache-Treffer berechnen
+        $total_requests = get_option('alenseo_total_api_requests', 0);
+        $cache_hits = get_option('alenseo_cache_hits', 0);
+        
+        if ($total_requests > 0) {
+            $stats['cache_hit_percentage'] = round(($cache_hits / $total_requests) * 100);
+        }
+        
+        // API-Status überprüfen
+        if ($stats['requests_today'] >= $stats['daily_limit']) {
+            $stats['status'] = 'limit';
+            $stats['status_message'] = __('Tageslimit erreicht', 'alenseo');
+        } elseif ($stats['tokens_used'] >= $stats['monthly_limit']) {
+            $stats['status'] = 'limit';
+            $stats['status_message'] = __('Monatslimit erreicht', 'alenseo');
+        } elseif ($stats['requests_today'] >= ($stats['daily_limit'] * 0.9)) {
+            $stats['status'] = 'warning';
+            $stats['status_message'] = __('Tageslimit fast erreicht', 'alenseo');
+        }
+        
+        return $stats;
     }
 }

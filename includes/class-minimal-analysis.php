@@ -22,19 +22,43 @@ if (!defined('ABSPATH')) {
 class Alenseo_Minimal_Analysis {
     
     /**
+     * Analyse-Cache-Dauer in Sekunden
+     * 
+     * @var int
+     */
+    private $cache_expiry = 3600; // 1 Stunde
+    
+    /**
      * Initialisierung der Klasse
      */
     public function __construct() {
-        // Keine besonderen Initialisierungen erforderlich
+        // Cache-Dauer aus Einstellungen laden, falls vorhanden
+        $settings = get_option('alenseo_settings', array());
+        if (isset($settings['analysis_cache_expiry'])) {
+            $this->cache_expiry = intval($settings['analysis_cache_expiry']);
+        }
     }
     
     /**
      * Post analysieren
      * 
      * @param int $post_id Die Post-ID
+     * @param bool $force_refresh Erzwingt eine neue Analyse unabhängig vom Cache
      * @return bool|WP_Error true bei Erfolg, sonst ein Fehler
      */
-    public function analyze_post($post_id) {
+    public function analyze_post($post_id, $force_refresh = false) {
+        // Cache-Check, wenn keine erzwungene Aktualisierung
+        if (!$force_refresh) {
+            $last_analysis = get_post_meta($post_id, '_alenseo_last_analysis', true);
+            if (!empty($last_analysis)) {
+                $last_time = strtotime($last_analysis);
+                // Wenn die letzte Analyse innerhalb der Cache-Zeit liegt, früh zurückkehren
+                if ((time() - $last_time) < $this->cache_expiry) {
+                    return true;
+                }
+            }
+        }
+        
         // Post-Daten abrufen
         $post = get_post($post_id);
         if (!$post) {
@@ -44,38 +68,53 @@ class Alenseo_Minimal_Analysis {
         // Keyword abrufen
         $keyword = get_post_meta($post_id, '_alenseo_keyword', true);
         
+        // Wenn kein Keyword gesetzt ist, nur einen Basis-Status setzen
+        if (empty($keyword)) {
+            update_post_meta($post_id, '_alenseo_seo_score', 0);
+            update_post_meta($post_id, '_alenseo_seo_status', 'no_keyword');
+            update_post_meta($post_id, '_alenseo_last_analysis', current_time('mysql'));
+            return true;
+        }
+        
         // Detaillierte Analyse durchführen
         $title_result = $this->analyze_title($post, $keyword);
         $content_result = $this->analyze_content($post, $keyword);
         $url_result = $this->analyze_url($post, $keyword);
         $meta_description_result = $this->analyze_meta_description($post_id, $keyword);
         
-        // Gesamtscore berechnen
-        $total_score = 0;
-        $factor_count = 0;
+        // Gesamtscore berechnen mit Gewichtung
+        $weights = array(
+            'title' => 1.5,    // Titel hat höhere Gewichtung
+            'content' => 1.3,  // Inhalt ebenfalls wichtig
+            'url' => 0.8,      // URL weniger wichtig
+            'meta' => 1.0      // Meta-Description Standard-Gewichtung
+        );
+        
+        $weighted_score = 0;
+        $total_weight = 0;
         
         if ($title_result['score'] > 0) {
-            $total_score += $title_result['score'];
-            $factor_count++;
+            $weighted_score += $title_result['score'] * $weights['title'];
+            $total_weight += $weights['title'];
         }
         
         if ($content_result['score'] > 0) {
-            $total_score += $content_result['score'];
-            $factor_count++;
+            $weighted_score += $content_result['score'] * $weights['content'];
+            $total_weight += $weights['content'];
         }
         
         if ($url_result['score'] > 0) {
-            $total_score += $url_result['score'];
-            $factor_count++;
+            $weighted_score += $url_result['score'] * $weights['url'];
+            $total_weight += $weights['url'];
         }
         
         if ($meta_description_result['score'] > 0) {
-            $total_score += $meta_description_result['score'];
-            $factor_count++;
+            $weighted_score += $meta_description_result['score'] * $weights['meta'];
+            $total_weight += $weights['meta'];
         }
         
         // Durchschnittlichen Score berechnen
-        $average_score = ($factor_count > 0) ? round($total_score / $factor_count) : 0;
+        $average_score = ($total_weight > 0) ? round($weighted_score / $total_weight) : 0;
         
         // Status basierend auf Score bestimmen
         $status = 'unknown';
