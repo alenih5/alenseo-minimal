@@ -449,6 +449,30 @@ jQuery(document).ready(function($) {
     }
     
     /**
+     * Optimierungsvorschläge abrufen
+     */
+    function getOptimizationSuggestions(postId, keyword, options) {
+        var action = options.enhanced ? 'alenseo_claude_get_enhanced_optimization_suggestions' : 'alenseo_claude_get_basic_optimization_suggestions';
+        
+        return $.ajax({
+            url: alenseoData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: action,
+                nonce: alenseoData.nonce,
+                post_id: postId,
+                keyword: keyword,
+                optimize_type: options.type || '',
+                optimize_title: options.title || false,
+                optimize_meta_description: options.metaDescription || false,
+                optimize_content: options.content || false,
+                tone: options.tone || 'professional',
+                level: options.level || 'moderate'
+            }
+        });
+    }
+    
+    /**
      * Analyse-Button-Handler
      */
     function initAnalyzeButtonHandlers() {

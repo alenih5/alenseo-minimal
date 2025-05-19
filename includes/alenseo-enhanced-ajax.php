@@ -18,9 +18,9 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * AJAX-Handler für Optimierungsvorschläge von Claude
+ * AJAX-Handler für erweiterte Optimierungsvorschläge von Claude
  */
-function alenseo_claude_get_optimization_suggestions() {
+function alenseo_claude_get_enhanced_optimization_suggestions() {
     // Nonce prüfen
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'alenseo_ajax_nonce')) {
         wp_send_json_error(array('message' => 'Sicherheitsüberprüfung fehlgeschlagen.'));
@@ -123,7 +123,7 @@ function alenseo_claude_get_optimization_suggestions() {
         wp_send_json_error(array('message' => 'Fehler bei der Generierung von Optimierungsvorschlägen: ' . $e->getMessage()));
     }
 }
-add_action('wp_ajax_alenseo_claude_get_optimization_suggestions', 'alenseo_claude_get_optimization_suggestions');
+add_action('wp_ajax_alenseo_claude_get_enhanced_optimization_suggestions', 'alenseo_claude_get_enhanced_optimization_suggestions');
 
 /**
  * AJAX-Handler für Keyword-Generierung von Claude

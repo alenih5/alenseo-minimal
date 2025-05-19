@@ -108,7 +108,7 @@ add_action('wp_ajax_alenseo_claude_generate_keywords', 'alenseo_claude_generate_
 /**
  * AJAX-Handler für das Generieren von Optimierungsvorschlägen über die Claude API
  */
-function alenseo_claude_get_optimization_suggestions() {
+function alenseo_claude_get_basic_optimization_suggestions() {
     // Überprüfe den Nonce-Wert für Sicherheit
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'alenseo_ajax_nonce')) {
         wp_send_json_error(array('message' => __('Sicherheitsüberprüfung fehlgeschlagen.', 'alenseo')));
@@ -156,4 +156,4 @@ function alenseo_claude_get_optimization_suggestions() {
         wp_send_json_error($result);
     }
 }
-add_action('wp_ajax_alenseo_claude_get_optimization_suggestions', 'alenseo_claude_get_optimization_suggestions');
+add_action('wp_ajax_alenseo_claude_get_basic_optimization_suggestions', 'alenseo_claude_get_basic_optimization_suggestions');
