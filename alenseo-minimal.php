@@ -37,7 +37,7 @@ if (defined('ALENSEO_MINIMAL_VERSION')) {
 
 define('ALENSEO_MINIMAL_DIR', plugin_dir_path(__FILE__));
 define('ALENSEO_MINIMAL_URL', plugin_dir_url(__FILE__));
-define('ALENSEO_MINIMAL_VERSION', '2.0.3');  // Version auf 2.0.3 aktualisiert
+define('ALENSEO_MINIMAL_VERSION', '2.0.4');  // Version auf 2.0.4 aktualisiert
 define('ALENSEO_PLUGIN_FILE', __FILE__);
 
 // Sichere Datei-Einbindung
