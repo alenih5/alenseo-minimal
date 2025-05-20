@@ -201,7 +201,7 @@ jQuery(document).ready(function($) {
         
         // AJAX-Anfrage für Analyse
         $.ajax({
-            url: ajaxurl,
+            url: alenseoData.ajaxUrl || ajaxurl,
             type: 'POST',
             data: {
                 action: 'alenseo_analyze_content',
@@ -430,7 +430,7 @@ jQuery(document).ready(function($) {
     function processBatch(action, contentIds, batchIndex, batchSize, settings) {
         // AJAX-Anfrage senden
         $.ajax({
-            url: ajaxurl,
+            url: alenseoData.ajaxUrl || ajaxurl,
             type: 'POST',
             data: {
                 action: action,
@@ -444,6 +444,29 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     // Fortschritt aktualisieren
                     updateProgressBar(response.data.stats.processed, response.data.stats.total);
+                    
+                    // UI für verarbeitete Posts aktualisieren
+                    if (response.data.results) {
+                        Object.keys(response.data.results).forEach(function(postId) {
+                            const result = response.data.results[postId];
+                            const $row = $(`tr[data-id="${postId}"]`);
+                            
+                            // Update status column
+                            const statusColumn = $row.find('.column-status');
+                            if (statusColumn.length && result.success) {
+                                const status = result.status || 'to-improve';
+                                const statusText = status === 'optimized' ? 'Optimiert' : 
+                                                  status === 'no_keyword' ? 'Keine Keywords' : 'Zu verbessern';
+                                statusColumn.html(`<span class="alenseo-status-badge ${status}">${statusText}</span>`);
+                            }
+                            
+                            // Update score column if it exists
+                            const scoreColumn = $row.find('.column-score');
+                            if (scoreColumn.length && result.score) {
+                                scoreColumn.text(result.score);
+                            }
+                        });
+                    }
                     
                     // Wenn nicht abgeschlossen, nächsten Batch verarbeiten
                     if (!response.data.completed) {
@@ -459,7 +482,9 @@ jQuery(document).ready(function($) {
                         alert(response.data.message || alenseoData.messages.allDone);
                         
                         // Seite neu laden, um aktualisierte Daten anzuzeigen
-                        location.reload();
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
                     }
                 } else {
                     // UI-Elemente zurücksetzen

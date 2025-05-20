@@ -138,6 +138,7 @@ $current_page_items = array_slice($filtered_posts, $offset, $items_per_page);
         <div class="alenseo-bulk-actions">
             <select id="alenseo-bulk-action">
                 <option value=""><?php _e('Massenaktionen', 'alenseo'); ?></option>
+                <option value="analyze_content"><?php _e('Inhalte analysieren', 'alenseo'); ?></option>
                 <option value="generate_keywords"><?php _e('Keywords generieren', 'alenseo'); ?></option>
                 <option value="optimize_titles"><?php _e('Titel optimieren', 'alenseo'); ?></option>
                 <option value="optimize_meta_descriptions"><?php _e('Meta-Beschreibungen optimieren', 'alenseo'); ?></option>

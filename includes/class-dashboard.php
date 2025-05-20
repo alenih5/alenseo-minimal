@@ -156,6 +156,30 @@ class Alenseo_Dashboard {
                         ALENSEO_MINIMAL_VERSION,
                         true
                     );
+                    
+                    // Localize bulk optimizer script
+                    wp_localize_script('alenseo-bulk-optimizer-js', 'alenseoData', array(
+                        'ajaxUrl' => admin_url('admin-ajax.php'),
+                        'nonce' => wp_create_nonce('alenseo_ajax_nonce'),
+                        'messages' => array(
+                            'analyzing' => __('Analysiere...', 'alenseo'),
+                            'success' => __('Analyse erfolgreich!', 'alenseo'),
+                            'error' => __('Fehler bei der Analyse. Bitte versuche es erneut.', 'alenseo'),
+                            'selectAction' => __('Bitte wähle eine Aktion aus.', 'alenseo'),
+                            'selectContent' => __('Bitte wähle mindestens einen Inhalt aus.', 'alenseo'),
+                            'allDone' => __('Alle Optimierungen wurden erfolgreich abgeschlossen!', 'alenseo')
+                        )
+                    ));
+                }
+                
+                // Bulk optimizer CSS
+                if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/bulk-optimizer.css')) {
+                    wp_enqueue_style(
+                        'alenseo-bulk-optimizer-css',
+                        ALENSEO_MINIMAL_URL . 'assets/css/bulk-optimizer.css',
+                        array(),
+                        ALENSEO_MINIMAL_VERSION
+                    );
                 }
                 
                 // Dashboard CSS
