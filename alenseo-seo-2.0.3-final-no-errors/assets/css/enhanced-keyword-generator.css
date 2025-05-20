@@ -1,0 +1,334 @@
+/**
+ * Enhanced Keyword Generator CSS mit Claude API-Integration
+ */
+
+.alenseo-meta-box {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.alenseo-meta-box-header {
+    padding: 12px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #e2e4e7;
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-score-container {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-score-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    margin-right: 10px;
+    color: white;
+    background-color: #ccc;
+}
+
+.alenseo-score-circle.poor {
+    background-color: #dc3232;
+}
+
+.alenseo-score-circle.ok {
+    background-color: #ffb900;
+}
+
+.alenseo-score-circle.good {
+    background-color: #46b450;
+}
+
+.alenseo-score-circle.unknown {
+    background-color: #72777c;
+}
+
+.alenseo-score-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.alenseo-score-label .status-poor {
+    color: #dc3232;
+}
+
+.alenseo-score-label .status-ok {
+    color: #ffb900;
+}
+
+.alenseo-score-label .status-good {
+    color: #46b450;
+}
+
+.alenseo-meta-box-content {
+    padding: 12px;
+}
+
+.alenseo-tabs {
+    display: flex;
+    border-bottom: 1px solid #e2e4e7;
+    margin-bottom: 12px;
+}
+
+.alenseo-tab {
+    padding: 8px 12px;
+    margin-right: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+}
+
+.alenseo-tab.active {
+    background: #fff;
+    border-color: #e2e4e7;
+    border-bottom-color: #fff;
+    margin-bottom: -1px;
+    font-weight: 600;
+}
+
+.alenseo-tab-content {
+    display: none;
+}
+
+.alenseo-tab-content.active {
+    display: block;
+}
+
+.alenseo-field {
+    margin-bottom: 16px;
+}
+
+.alenseo-field label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.alenseo-field input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.alenseo-field-info {
+    margin-top: 8px;
+}
+
+.alenseo-keyword-generator {
+    margin-top: 12px;
+    margin-bottom: 16px;
+}
+
+.alenseo-kw-generator-trigger {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-api-badge {
+    display: inline-block;
+    background-color: #8458B3;
+    color: white;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+.alenseo-kw-generator-content {
+    margin-top: 12px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.alenseo-loading {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+}
+
+.alenseo-loading .spinner {
+    float: none;
+    margin-right: 8px;
+}
+
+.alenseo-kw-suggestions h4 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.alenseo-kw-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.alenseo-kw-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #ddd;
+    margin-bottom: 4px;
+    border-radius: 4px;
+}
+
+.alenseo-kw-text {
+    font-weight: 500;
+}
+
+.alenseo-kw-score {
+    color: #666;
+    margin-left: 5px;
+}
+
+.alenseo-kw-select {
+    margin-left: auto !important;
+}
+
+.alenseo-error {
+    color: #dc3232;
+    margin: 8px 0;
+}
+
+/* Analyse-Tab */
+.alenseo-analysis-item {
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.alenseo-analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f9f9f9;
+    font-weight: 600;
+}
+
+.alenseo-analysis-header.poor {
+    background-color: #fbeaea;
+    border-bottom: 1px solid #dc3232;
+}
+
+.alenseo-analysis-header.ok {
+    background-color: #fff8e5;
+    border-bottom: 1px solid #ffb900;
+}
+
+.alenseo-analysis-header.good {
+    background-color: #eaf9eb;
+    border-bottom: 1px solid #46b450;
+}
+
+.alenseo-analysis-header.unknown {
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
+.alenseo-analysis-score {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #ddd;
+}
+
+.alenseo-analysis-message {
+    padding: 12px;
+    background: #fff;
+    font-size: 13px;
+}
+
+.alenseo-analysis-actions {
+    margin-top: 16px;
+    text-align: center;
+}
+
+/* Optimierungsvorschläge-Tab */
+.alenseo-suggestions-container {
+    margin-bottom: 16px;
+}
+
+.alenseo-notice {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.alenseo-suggestions-loading {
+    display: flex;
+    align-items: center;
+    margin: 12px 0;
+}
+
+.alenseo-suggestions-loading .spinner {
+    float: none;
+    margin-right: 8px;
+}
+
+.alenseo-suggestion-section {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.alenseo-suggestion-section h4 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.alenseo-suggestion-text {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+.alenseo-content-suggestion-list {
+    margin: 0;
+    padding: 0 0 0 20px;
+}
+
+.alenseo-content-suggestion-item {
+    margin-bottom: 8px;
+}
+
+.alenseo-suggestions-actions {
+    margin-top: 16px;
+    text-align: center;
+}
+
+/* Animation für Spinner */
+@keyframes rotation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.dashicons-update {
+    animation: rotation 2s infinite linear;
+}

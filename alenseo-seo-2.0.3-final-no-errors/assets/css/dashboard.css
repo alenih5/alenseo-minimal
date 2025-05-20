@@ -1,0 +1,1063 @@
+/**
+ * Dashboard CSS für die SEO-Optimierung
+ */
+
+/* Dashboard-Grundstil */
+.alenseo-optimizer-wrap {
+    margin: 20px 0;
+}
+
+.alenseo-optimizer-wrap h1 {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-optimizer-wrap h1 .dashicons {
+    margin-right: 10px;
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+}
+
+/* Dashboard-Header und Statistiken */
+.alenseo-dashboard-header {
+    margin: 20px 0;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    padding: 20px;
+    border-radius: 3px;
+}
+
+.alenseo-dashboard {
+    margin: 20px;
+}
+
+.alenseo-stats-overview {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.alenseo-stat-box {
+    background: white;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    flex: 1;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.alenseo-stat-box h3 {
+    margin-top: 0;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.alenseo-stat-box .stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 10px 0;
+    line-height: 1.3;
+}
+
+.alenseo-stat-box .stat-label {
+    color: #777;
+    font-size: 13px;
+}
+
+/* Status colors */
+.alenseo-stat-box .stat-number.good {
+    color: #46b450;
+}
+
+.alenseo-stat-box .stat-number.ok {
+    color: #ffb900;
+}
+
+.alenseo-stat-box .stat-number.poor {
+    color: #dc3232;
+}
+
+.alenseo-stat-box .stat-number.warning {
+    color: #ff9800;
+}
+
+.alenseo-stat-box .stat-number.attention {
+    color: #9c27b0;
+}
+
+.alenseo-stat-box h3 {
+    margin: 0 0 10px 0;
+    color: #23282d;
+    font-size: 14px;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+.alenseo-filters {
+    background: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.alenseo-filters form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.alenseo-filters select,
+.alenseo-filters input[type="search"] {
+    min-width: 200px;
+}
+
+.seo-score-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.score-good {
+    background-color: #00a32a;
+    color: white;
+}
+
+.score-needs_improvement {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.score-poor {
+    background-color: #d63638;
+    color: white;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.status-good {
+    background-color: #edf7ed;
+    color: #00a32a;
+}
+
+.status-needs_improvement {
+    background-color: #fff8e5;
+    color: #996500;
+}
+
+.status-poor {
+    background-color: #fcf0f1;
+    color: #d63638;
+}
+
+.alenseo-stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.alenseo-stat-box {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.alenseo-stat-box-primary {
+    background: #fff;
+    border-color: #007cba;
+}
+
+.alenseo-stat-box-header {
+    padding: 10px 15px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.alenseo-stat-box-primary .alenseo-stat-box-header {
+    background: #007cba;
+    color: #fff;
+}
+
+.alenseo-stat-box-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.alenseo-stat-box-content {
+    padding: 15px;
+}
+
+/* Score-Kreis */
+.alenseo-stat-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 8px solid #ddd;
+    position: relative;
+}
+
+.alenseo-stat-circle::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: calc(100% + 16px);
+    height: calc(100% + 16px);
+    border-radius: 50%;
+    border: 8px solid transparent;
+    border-top-color: #46b450;
+    border-right-color: #46b450;
+    clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%, 50% 0%);
+    transform: rotate(calc(var(--percentage, 45) * 3.6deg));
+}
+
+.alenseo-stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #333;
+}
+
+.alenseo-stat-description {
+    text-align: center;
+    color: #666;
+}
+
+/* Status-Balken */
+.alenseo-stat-bars {
+    margin-top: 10px;
+}
+
+.alenseo-stat-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.alenseo-stat-bar-label {
+    flex: 0 0 150px;
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-stat-bar-label span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.alenseo-stat-bar-label .status-good {
+    background-color: #46b450;
+}
+
+.alenseo-stat-bar-label .status-ok {
+    background-color: #ffb900;
+}
+
+.alenseo-stat-bar-label .status-poor {
+    background-color: #dc3232;
+}
+
+.alenseo-stat-bar-progress {
+    flex: 1;
+    height: 10px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 0 10px;
+}
+
+.alenseo-stat-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.alenseo-bar-good {
+    background-color: #46b450;
+}
+
+.alenseo-bar-ok {
+    background-color: #ffb900;
+}
+
+.alenseo-bar-poor {
+    background-color: #dc3232;
+}
+
+.alenseo-stat-bar-value {
+    flex: 0 0 40px;
+    text-align: right;
+    font-weight: 600;
+}
+
+/* Fortschrittsbalken */
+.alenseo-progress-stats {
+    margin-top: 10px;
+}
+
+.alenseo-progress-item {
+    margin-bottom: 15px;
+}
+
+.alenseo-progress-label {
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.alenseo-progress-bar {
+    height: 10px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.alenseo-progress-fill {
+    height: 100%;
+    background-color: #007cba;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.alenseo-progress-value {
+    text-align: right;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Filter und Bulk-Aktionen */
+.alenseo-bulk-actions-bar {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 10px 15px;
+    border-radius: 3px;
+}
+
+.alenseo-search-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px;
+}
+
+.alenseo-filter-group, .alenseo-search-group {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-filter-group label {
+    margin-right: 5px;
+}
+
+.alenseo-bulk-actions {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.alenseo-bulk-actions-select {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-bulk-actions-select select {
+    margin-right: 5px;
+}
+
+.alenseo-selection-info {
+    margin-left: 15px;
+    display: flex;
+    align-items: center;
+}
+
+/* Fortschrittsanzeige */
+.alenseo-progress-bar-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+}
+
+.alenseo-progress-bar {
+    height: 15px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.alenseo-progress-fill {
+    height: 100%;
+    background-color: #007cba;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.alenseo-progress-text {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Inhaltstabelle */
+.alenseo-contents-table-container {
+    margin-top: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.alenseo-contents-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.alenseo-contents-table th {
+    text-align: left;
+    padding: 8px 10px;
+}
+
+.alenseo-contents-table th.check-column {
+    width: 30px;
+}
+
+.alenseo-contents-table th.column-title {
+    width: 30%;
+}
+
+.alenseo-contents-table th.column-type {
+    width: 10%;
+}
+
+.alenseo-contents-table th.column-keyword {
+    width: 20%;
+}
+
+.alenseo-contents-table th.column-score,
+.alenseo-contents-table th.column-status {
+    width: 15%;
+}
+
+.alenseo-contents-table th.column-actions {
+    width: 10%;
+}
+
+.alenseo-contents-table td {
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+
+.alenseo-keyword-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #333;
+}
+
+.alenseo-no-keyword {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+}
+
+.alenseo-score-pill {
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    border-radius: 50%;
+    background: #f0f0f0;
+    font-weight: bold;
+    color: #fff;
+}
+
+.alenseo-score-pill.score-good {
+    background-color: #46b450;
+}
+
+.alenseo-score-pill.score-ok {
+    background-color: #ffb900;
+}
+
+.alenseo-score-pill.score-poor {
+    background-color: #dc3232;
+}
+
+.alenseo-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.alenseo-status-good {
+    background-color: #eaf9eb;
+    color: #46b450;
+}
+
+.alenseo-status-ok {
+    background-color: #fff8e5;
+    color: #ffb900;
+}
+
+.alenseo-status-poor {
+    background-color: #fbeaea;
+    color: #dc3232;
+}
+
+.alenseo-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.alenseo-actions button {
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alenseo-actions .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Pagination */
+.alenseo-pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alenseo-pagination-pages {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-pagination-pages a, 
+.alenseo-pagination-pages span {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 0 3px;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    color: #0073aa;
+}
+
+.alenseo-pagination-pages a.current {
+    background: #0073aa;
+    border-color: #0073aa;
+    color: #fff;
+}
+
+.alenseo-items-per-page {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-items-per-page label {
+    margin-right: 5px;
+}
+
+/* Dialog */
+.alenseo-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alenseo-dialog-content {
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.alenseo-dialog-header {
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alenseo-dialog-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.alenseo-dialog-close {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    padding: 0;
+    color: #666;
+}
+
+.alenseo-dialog-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.alenseo-dialog-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.alenseo-dialog-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.alenseo-dialog-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #23282d;
+}
+
+.alenseo-current-keyword {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+}
+
+.alenseo-keyword-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.alenseo-keyword-item {
+    padding: 8px 12px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.alenseo-keyword-item:hover,
+.alenseo-keyword-item.selected {
+    background: #f0f7fb;
+    border-color: #007cba;
+}
+
+.alenseo-keyword-text {
+    display: block;
+    font-weight: 500;
+}
+
+.alenseo-keyword-text small {
+    font-weight: normal;
+    color: #666;
+}
+
+.alenseo-optimization-options {
+    margin-top: 15px;
+}
+
+.alenseo-optimization-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.alenseo-optimization-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.alenseo-dialog-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.alenseo-dialog-loader .spinner {
+    float: none;
+    margin: 0 10px 0 0;
+}
+
+.alenseo-result-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+}
+
+.alenseo-result-section h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #23282d;
+}
+
+.alenseo-result-content {
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    margin-bottom: 10px;
+}
+
+.alenseo-content-suggestions {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.alenseo-content-suggestions li {
+    margin-bottom: 8px;
+}
+
+.alenseo-dialog-footer {
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border-top: 1px solid #e5e5e5;
+    text-align: right;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 782px) {
+    .alenseo-stats-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .alenseo-bulk-actions-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .alenseo-search-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .alenseo-filter-group, .alenseo-search-group {
+        margin-bottom: 10px;
+    }
+    
+    .alenseo-bulk-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .alenseo-bulk-actions-select {
+        flex-direction: column;
+    }
+    
+    .alenseo-bulk-actions-select select {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .alenseo-contents-table th.column-type,
+    .alenseo-contents-table td.column-type {
+        display: none;
+    }
+    
+    .alenseo-keyword-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .alenseo-stats-overview {
+        flex-direction: column;
+    }
+    
+    .alenseo-filters form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .alenseo-filters select,
+    .alenseo-filters input[type="search"] {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* Massenoptimierungs-Steuerelemente */
+.alenseo-bulk-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.alenseo-bulk-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.alenseo-selection-info {
+    font-weight: 500;
+    color: #555;
+}
+
+#alenseo-clear-selection {
+    color: #0073aa;
+    text-decoration: underline;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+/* Fortschrittsanzeige */
+#alenseo-progress-bar {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.alenseo-progress-track {
+    height: 10px;
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.alenseo-progress-fill {
+    height: 100%;
+    background-color: #2271b1;
+    width: 0;
+    transition: width 0.3s ease-in-out;
+}
+
+.alenseo-progress-info {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
+
+.alenseo-progress-label {
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+/* Optimierungsdialog */
+.alenseo-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.6);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alenseo-dialog-content {
+    background: white;
+    border-radius: 4px;
+    min-width: 500px;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.alenseo-dialog-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alenseo-dialog-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.alenseo-dialog-body {
+    padding: 20px;
+}
+
+.alenseo-dialog-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+}
+
+.alenseo-dialog-close.dashicons {
+    cursor: pointer;
+    color: #666;
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}
+
+/* Keyword-Bereich im Dialog */
+.alenseo-keyword-section {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.alenseo-keyword-list {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.alenseo-keyword-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.alenseo-keyword-item:hover {
+    background: #f5f5f5;
+}
+
+.alenseo-keyword-item.selected {
+    background: #e5f5fa;
+    border-left: 3px solid #2271b1;
+}
+
+.alenseo-keyword-item:last-child {
+    border-bottom: none;
+}
+
+.alenseo-keyword-badge {
+    background: #e7f5fa;
+    color: #0073aa;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.alenseo-no-keyword {
+    color: #999;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Optimierungsoptionen im Dialog */
+.alenseo-optimization-options {
+    margin-bottom: 25px;
+}
+
+.alenseo-optimization-options label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.alenseo-optimization-actions {
+    margin-top: 15px;
+}
+
+/* Ergebnisbereich */
+.alenseo-results-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.alenseo-result-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.alenseo-result-content {
+    margin: 10px 0;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 3px;
+}
+
+.alenseo-content-suggestions {
+    margin: 10px 0;
+    padding-left: 25px;
+}
+
+.alenseo-content-suggestions li {
+    margin-bottom: 8px;
+}

@@ -1,0 +1,292 @@
+/* Alenseo SEO Meta-Box Styles */
+
+/* Meta-Box Container */
+.alenseo-meta-box {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    border-radius: 3px;
+    margin-bottom: 20px;
+}
+
+/* Meta-Box Header */
+.alenseo-meta-box-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid #ccd0d4;
+    background: #f8f9fa;
+}
+
+.alenseo-meta-box-title {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.alenseo-meta-box-score {
+    display: flex;
+    align-items: center;
+}
+
+.alenseo-score {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #fff;
+}
+
+.alenseo-score-good {
+    background-color: #00a32a;
+}
+
+.alenseo-score-average {
+    background-color: #f59e0b;
+}
+
+.alenseo-score-poor {
+    background-color: #d63638;
+}
+
+.alenseo-score-value {
+    font-size: 14px;
+}
+
+/* Meta-Box Body */
+.alenseo-meta-box-body {
+    padding: 12px;
+}
+
+.alenseo-meta-box-section {
+    margin-bottom: 16px;
+}
+
+.alenseo-meta-box-section:last-child {
+    margin-bottom: 0;
+}
+
+.alenseo-meta-box-section-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.alenseo-meta-box-section-title h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.alenseo-tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #ddd;
+    color: #555;
+    font-size: 11px;
+    margin-left: 6px;
+    cursor: help;
+}
+
+.alenseo-tooltip-box {
+    position: absolute;
+    background-color: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.4;
+    max-width: 200px;
+    z-index: 9999;
+}
+
+.alenseo-meta-box-field {
+    margin-bottom: 12px;
+}
+
+/* Status & Actions */
+.alenseo-meta-box-status {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.alenseo-meta-box-actions {
+    margin-top: 8px;
+}
+
+.alenseo-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.alenseo-status-good {
+    background-color: #d1e7dd;
+    color: #0a3622;
+}
+
+.alenseo-status-average {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+.alenseo-status-poor {
+    background-color: #f8d7da;
+    color: #58151c;
+}
+
+/* Analyze Button */
+.alenseo-analyze-button, 
+.alenseo-generate-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.alenseo-analyze-button .dashicons, 
+.alenseo-generate-button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Notice Box */
+.alenseo-meta-box-notice {
+    background-color: #f0f6fc;
+    border-left: 4px solid #72aee6;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+}
+
+.alenseo-meta-box-notice p {
+    margin: 0;
+}
+
+/* Analysis Results */
+.alenseo-meta-box-analysis {
+    margin-top: 10px;
+}
+
+.alenseo-meta-box-score-detail {
+    margin-bottom: 12px;
+}
+
+.alenseo-score-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.alenseo-score-progress {
+    height: 100%;
+}
+
+.alenseo-score-number {
+    font-size: 12px;
+    font-weight: 500;
+    color: #646970;
+}
+
+.alenseo-meta-box-tips p {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.alenseo-meta-box-tips ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.alenseo-meta-box-tips li {
+    margin-bottom: 4px;
+}
+
+/* Footer */
+.alenseo-meta-box-footer {
+    border-top: 1px solid #f0f0f1;
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+.alenseo-meta-box-footer p {
+    margin: 0;
+    font-size: 12px;
+    color: #646970;
+}
+
+/* Keyword Suggestions */
+.alenseo-keyword-suggestions {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.alenseo-keyword-suggestions h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.alenseo-keyword-suggestions-list {
+    min-height: 50px;
+}
+
+.alenseo-keyword-suggestions-loading {
+    text-align: center;
+    padding: 15px;
+}
+
+.alenseo-keyword-suggestion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.alenseo-keyword-suggestion:last-child {
+    margin-bottom: 0;
+}
+
+.alenseo-keyword-suggestion-score {
+    font-size: 12px;
+    font-weight: 500;
+    color: #646970;
+}
+
+.alenseo-keyword-suggestion-button {
+    font-size: 12px;
+    padding: 3px 8px;
+}
+
+/* Animation */
+@keyframes rotation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.dashicons-update {
+    animation: rotation 2s infinite linear;
+}
