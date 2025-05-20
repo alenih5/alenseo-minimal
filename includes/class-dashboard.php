@@ -91,9 +91,16 @@ class Alenseo_Dashboard {
     public function enqueue_dashboard_assets($hook) {
         try {
             // Dashboard-Seite
-            if (strpos($hook, 'alenseo-optimizer') !== false) {
-                // Dashboard CSS
-                if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/dashboard.css')) {
+            if (strpos($hook, 'alenseo-optimizer') !== false || strpos($hook, 'alenseo-seo') !== false) {
+                // Dashboard CSS - Visuelle Version bevorzugt laden wenn vorhanden
+                if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/dashboard-visual.css')) {
+                    wp_enqueue_style(
+                        'alenseo-dashboard-visual-css',
+                        ALENSEO_MINIMAL_URL . 'assets/css/dashboard-visual.css',
+                        array(),
+                        ALENSEO_MINIMAL_VERSION
+                    );
+                } else if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/dashboard.css')) {
                     wp_enqueue_style(
                         'alenseo-dashboard-css',
                         ALENSEO_MINIMAL_URL . 'assets/css/dashboard.css',
@@ -112,8 +119,25 @@ class Alenseo_Dashboard {
                     }
                 }
                 
-                // Dashboard JS
-                if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/js/dashboard-minimal.js')) {
+                // Dashboard JS - Visuelle Version bevorzugt laden wenn vorhanden
+                // Für das visuelle Dashboard Chart.js einbinden
+                wp_enqueue_script(
+                    'chartjs',
+                    'https://cdn.jsdelivr.net/npm/chart.js',
+                    array('jquery'),
+                    '4.3.0', // Chart.js Version
+                    true
+                );
+                
+                if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/js/dashboard-visual.js')) {
+                    wp_enqueue_script(
+                        'alenseo-dashboard-visual-js',
+                        ALENSEO_MINIMAL_URL . 'assets/js/dashboard-visual.js',
+                        array('jquery', 'chartjs'),
+                        ALENSEO_MINIMAL_VERSION,
+                        true
+                    );
+                } else if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/js/dashboard-minimal.js')) {
                     wp_enqueue_script(
                         'alenseo-dashboard-js',
                         ALENSEO_MINIMAL_URL . 'assets/js/dashboard-minimal.js',
@@ -205,8 +229,13 @@ class Alenseo_Dashboard {
      */
     public function render_dashboard_page() {
         try {
-            // Dashboard-Template laden und rendern
-            $template_file = ALENSEO_MINIMAL_DIR . 'templates/dashboard-page.php';
+            // Dashboard-Template laden - visuelles Dashboard bevorzugen
+            $template_file = ALENSEO_MINIMAL_DIR . 'templates/dashboard-page-visual.php';
+            
+            // Fallback zum normalen Dashboard, falls visuelles nicht existiert
+            if (!file_exists($template_file) || filesize($template_file) == 0) {
+                $template_file = ALENSEO_MINIMAL_DIR . 'templates/dashboard-page.php';
+            }
             
             if (file_exists($template_file)) {
                 // Daten für das Dashboard vorbereiten
@@ -273,8 +302,8 @@ class Alenseo_Dashboard {
                 wp_die(__('Die ausgewählte Seite existiert nicht.', 'alenseo'));
             }
             
-            // Benutzerrechte prüfen
-            if (!current_user_can('edit_post', $post_id)) {
+            // Benutzerrechte prüfen - erlaubt edit_posts für alle Seiten/Posts
+            if (!current_user_can('edit_posts')) {
                 wp_die(__('Du hast keine Berechtigung, diese Seite anzusehen.', 'alenseo'));
             }
             

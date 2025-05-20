@@ -147,6 +147,9 @@ jQuery(document).ready(function($) {
         
         // AJAX-Anfrage für die entsprechende Aktion
         switch (action) {
+            case 'analyze_content':
+                processBulkAction('alenseo_bulk_analyze', selectedContentIds);
+                break;
             case 'generate_keywords':
                 processBulkAction('alenseo_bulk_generate_keywords', selectedContentIds);
                 break;
@@ -194,14 +197,14 @@ jQuery(document).ready(function($) {
         // Button deaktivieren und Ladeanimation anzeigen
         button.prop('disabled', true);
         const originalHtml = button.html();
-        button.html('<span class="dashicons dashicons-update"></span>');
+        button.html('<span class="dashicons dashicons-update spinning"></span>');
         
         // AJAX-Anfrage für Analyse
         $.ajax({
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'alenseo_analyze_post',
+                action: 'alenseo_analyze_content',
                 post_id: contentId,
                 nonce: alenseoData.nonce
             },
@@ -211,9 +214,25 @@ jQuery(document).ready(function($) {
                 button.html(originalHtml);
                 
                 if (response.success) {
-                    // Erfolgsmeldung und Seite neu laden
+                    // Erfolgsmeldung und Zeile aktualisieren
+                    const $row = $(`tr[data-id="${contentId}"]`);
+                    
+                    // Update status column
+                    const statusColumn = $row.find('.column-status');
+                    if (statusColumn.length) {
+                        const status = response.data.status || 'to-improve';
+                        const statusText = status === 'optimized' ? 'Optimiert' : 'Zu verbessern';
+                        statusColumn.html(`<span class="alenseo-status-badge ${status}">${statusText}</span>`);
+                    }
+                    
+                    // Update score column if it exists
+                    const scoreColumn = $row.find('.column-score');
+                    if (scoreColumn.length && response.data.score) {
+                        scoreColumn.text(response.data.score);
+                    }
+                    
+                    // Show success message
                     alert(response.data.message || 'Analyse erfolgreich durchgeführt.');
-                    location.reload();
                 } else {
                     // Fehlermeldung
                     alert(response.data.message || 'Fehler bei der Analyse.');

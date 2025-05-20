@@ -325,6 +325,28 @@
     margin-left: 8px;
 }
 
+/* API Test Styling */
+#api-test-result {
+    margin-top: 10px;
+    padding: 8px 0;
+    display: block;
+}
+
+#api-test-result .loading {
+    color: #666;
+    font-style: italic;
+}
+
+#api-test-result .success {
+    color: #46b450;
+    font-weight: 500;
+}
+
+#api-test-result .error {
+    color: #dc3232;
+    font-weight: 500;
+}
+
 /* Responsive Anpassungen */
 @media screen and (max-width: 782px) {
     .alenseo-settings-tabs {

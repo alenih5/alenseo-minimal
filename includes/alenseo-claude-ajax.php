@@ -50,9 +50,22 @@ function alenseo_test_claude_api() {
     // API-Test durchführen
     $test_result = $claude_api->test_api_key();
     
-    if ($test_result['success']) {
+    if (isset($test_result['success']) && $test_result['success']) {
+        // Status in Optionen speichern für Statusanzeige im Dashboard
+        update_option('alenseo_api_status', 'active');
         wp_send_json_success($test_result);
     } else {
+        // Fehler beim API-Test
+        update_option('alenseo_api_status', 'error');
+        
+        // Wenn test_result ein WP_Error-Objekt ist, in Array umwandeln
+        if (is_wp_error($test_result)) {
+            $test_result = array(
+                'success' => false,
+                'message' => $test_result->get_error_message()
+            );
+        }
+        
         wp_send_json_error($test_result);
     }
 }

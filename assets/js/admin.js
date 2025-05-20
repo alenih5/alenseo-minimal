@@ -178,4 +178,95 @@ jQuery(document).ready(function($) {
             }
         });
     });
+    
+    // Test der Claude API
+    $('#alenseo-test-api-key').on('click', function(e) {
+        e.preventDefault();
+        
+        var apiKey = $('#claude_api_key').val();
+        var testButton = $(this);
+        var statusContainer = $('#alenseo-api-status-container');
+        
+        if (!apiKey) {
+            statusContainer.html('<div class="notice notice-error inline"><p>' + 
+                                 'Bitte geben Sie einen API-Schlüssel ein.' + '</p></div>');
+            return;
+        }
+        
+        // Button-Status während des Tests
+        testButton.prop('disabled', true);
+        testButton.text('Teste API...');
+        statusContainer.html('<div class="notice notice-info inline"><p>API wird getestet...</p></div>');
+        
+        // AJAX-Anfrage
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_test_claude_api',
+                api_key: apiKey,
+                nonce: alenseoData.nonce
+            },
+            success: function(response) {
+                testButton.prop('disabled', false);
+                testButton.text('API testen');
+                
+                if (response.success) {
+                    statusContainer.html('<div class="notice notice-success inline"><p>' + 
+                                        'API-Test erfolgreich! ' + response.data.message + '</p></div>');
+                    
+                    // Status speichern
+                    localStorage.setItem('alenseo_api_status', 'active');
+                } else {
+                    var errorMessage = response.data && response.data.message ? response.data.message : 'Unbekannter Fehler beim API-Test.';
+                    statusContainer.html('<div class="notice notice-error inline"><p>' + 
+                                         'API-Test fehlgeschlagen: ' + errorMessage + '</p></div>');
+                }
+            },
+            error: function() {
+                testButton.prop('disabled', false);
+                testButton.text('API testen');
+                statusContainer.html('<div class="notice notice-error inline"><p>' + 
+                                     'Fehler bei der Verbindung zum Server. Bitte versuchen Sie es erneut.' + '</p></div>');
+            }
+        });
+    });
+      // API-Test-Funktion
+    $('#alenseo-api-test').on('click', function(e) {
+        e.preventDefault();
+        
+        // API-Key holen
+        var apiKey = $('#claude_api_key').val();
+        var model = $('#claude_model').val();
+        
+        if (!apiKey) {
+            alert('Bitte geben Sie einen API-Schlüssel ein.');
+            return;
+        }
+        
+        // API-Test-Status auf "Wird getestet..." setzen
+        $('#api-test-result').html('<span class="loading">API wird getestet...</span>');
+        
+        // AJAX-Request für API-Test
+        $.ajax({
+            url: alenseoAdminData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_test_api_key',
+                nonce: alenseoAdminData.nonce,
+                api_key: apiKey,
+                model: model
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#api-test-result').html('<span class="success">' + response.data.message + '</span>');
+                } else {
+                    $('#api-test-result').html('<span class="error">' + (response.data.message || 'Fehler beim API-Test.') + '</span>');
+                }
+            },
+            error: function() {
+                $('#api-test-result').html('<span class="error">Kommunikationsfehler beim API-Test.</span>');
+            }
+        });
+    });
 });

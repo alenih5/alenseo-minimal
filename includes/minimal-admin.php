@@ -36,15 +36,21 @@ class Alenseo_Minimal_Admin {
     }
     
     /**
-     * Meta-Box hinzufügen
+     * Meta-Box hinzufügen 
+     * Deaktiviert, um Dopplung mit class-meta-box.php zu vermeiden
      */
     public function add_meta_boxes() {
+        // Deaktiviert wegen Dopplung mit class-meta-box.php
+        return;
+        
         // Einstellungen abrufen
         $settings = get_option('alenseo_settings', array());
         $post_types = isset($settings['post_types']) ? $settings['post_types'] : array('post', 'page');
         
         // Meta-Box zu allen ausgewählten Post-Typen hinzufügen
         foreach ($post_types as $post_type) {
+            // Deaktiviert
+            /*
             add_meta_box(
                 'alenseo_meta_box',
                 __('Alenseo SEO', 'alenseo'),
@@ -53,6 +59,7 @@ class Alenseo_Minimal_Admin {
                 'normal',
                 'high'
             );
+            */
         }
     }
     
@@ -204,26 +211,37 @@ class Alenseo_Minimal_Admin {
         }
         
         // Plugin-Einstellungsseite-Assets laden
-        if ('toplevel_page_alenseo-minimal-settings' === $hook) {
-            // Settings CSS
-            if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/settings.css')) {
+        if ('toplevel_page_alenseo-minimal-settings' === $hook || strpos($hook, 'alenseo-settings') !== false) {
+            // Admin CSS
+            if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/css/admin.css')) {
                 wp_enqueue_style(
-                    'alenseo-settings-css',
-                    ALENSEO_MINIMAL_URL . 'assets/css/settings.css',
+                    'alenseo-admin-css',
+                    ALENSEO_MINIMAL_URL . 'assets/css/admin.css',
                     array(),
                     ALENSEO_MINIMAL_VERSION
                 );
             }
             
-            // Settings JS
-            if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/js/settings.js')) {
+            // Admin JS
+            if (file_exists(ALENSEO_MINIMAL_DIR . 'assets/js/admin.js')) {
                 wp_enqueue_script(
-                    'alenseo-settings-js',
-                    ALENSEO_MINIMAL_URL . 'assets/js/settings.js',
+                    'alenseo-admin-js',
+                    ALENSEO_MINIMAL_URL . 'assets/js/admin.js',
                     array('jquery'),
                     ALENSEO_MINIMAL_VERSION,
                     true
                 );
+                
+                // AJAX-URL und Nonce für JavaScript
+                wp_localize_script('alenseo-admin-js', 'alenseoAdminData', array(
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('alenseo_ajax_nonce'),
+                    'messages' => array(
+                        'apiTestSuccess' => __('API-Test erfolgreich!', 'alenseo'),
+                        'apiTestFailed' => __('API-Test fehlgeschlagen: ', 'alenseo'),
+                        'apiTesting' => __('API wird getestet...', 'alenseo'),
+                    )
+                ));
             }
         }
     }

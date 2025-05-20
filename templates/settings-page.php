@@ -162,17 +162,28 @@ $post_types = get_post_types(array(
                             <button type="button" id="toggle_api_key" class="button button-secondary">
                                 <span class="dashicons dashicons-visibility"></span>
                             </button>
-                            <input type="submit" name="test_api" id="test_api" class="button button-secondary" value="<?php esc_attr_e('API testen', 'alenseo'); ?>">
+                            <button type="button" id="alenseo-api-test" class="button button-secondary">
+                                <?php esc_html_e('API testen', 'alenseo'); ?>
+                            </button>
                             
-                            <?php if ($api_test_result === 'success') : ?>
-                                <div class="notice notice-success inline">
-                                    <p><?php _e('API-Verbindung erfolgreich getestet!', 'alenseo'); ?></p>
-                                </div>
-                            <?php elseif ($api_test_result === 'error') : ?>
-                                <div class="notice notice-error inline">
-                                    <p><?php echo __('API-Test fehlgeschlagen: ', 'alenseo') . esc_html($api_error_message); ?></p>
-                                </div>
-                            <?php endif; ?>
+                            <div id="api-test-result">
+                                <?php 
+                                // Claude API-Objekt erstellen
+                                $claude_api = new Alenseo_Claude_API(
+                                    isset($settings['claude_api_key']) ? $settings['claude_api_key'] : '', 
+                                    isset($settings['claude_model']) ? $settings['claude_model'] : 'claude-3-haiku-20240307'
+                                );
+                                
+                                // API-Status anzeigen wenn API-Schlüssel konfiguriert ist
+                                if ($claude_api->is_api_configured()) : 
+                                    $test_result = $claude_api->test_api_key();
+                                    if ($test_result['success']) :
+                                ?>
+                                    <span class="success"><?php echo esc_html($test_result['message']); ?></span>
+                                <?php else : ?>
+                                    <span class="error"><?php echo esc_html($test_result['message']); ?></span>
+                                <?php endif; endif; ?>
+                            </div>
                             
                             <p class="description">
                                 <?php _e('Gib deinen Claude API-Schlüssel ein. Du kannst einen API-Schlüssel auf <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> erstellen.', 'alenseo'); ?>

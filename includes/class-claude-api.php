@@ -3,7 +3,43 @@
  * Claude API-Klasse für Alenseo SEO
  * Diese Klasse ist verantwortlich für die Kommunikation mit der Claude AI API
  * 
- * @link       https://www.imponi.ch
+ * @link        /**
+     * API-Schlüssel testen
+     * 
+     * @return array Erfolgs-/Fehlerinformationen
+     */
+    public function test_key() {
+        if (empty($this->api_key)) {
+            return array(
+                'success' => false,
+                'message' => __('Kein API-Schlüssel konfiguriert.', 'alenseo')
+            );
+        }
+        
+        // Überprüfen ob API-Schlüssel zu lang ist
+        if (strlen($this->api_key) > 100) {
+            return array(
+                'success' => false,
+                'message' => __('API-Schlüssel ist zu lang. Bitte überprüfen Sie den eingegebenen Schlüssel.', 'alenseo')
+            );
+        }
+        
+        // Minimalen Prompt für den Test erstellen
+        $result = $this->generate_text("Bitte antworte mit dem Wort: Test");
+        
+        if (is_wp_error($result)) {
+            return array(
+                'success' => false,
+                'message' => $result->get_error_message()
+            );
+        }
+        
+        return array(
+            'success' => true,
+            'message' => __('API-Verbindung erfolgreich getestet!', 'alenseo'),
+            'model' => $this->model
+        );
+    }ni.ch
  * @since      1.0.0
  *
  * @package    Alenseo
@@ -143,21 +179,39 @@ class Alenseo_Claude_API {
     /**
      * Schlüssel testen
      * 
-     * @return bool|WP_Error true bei Erfolg, WP_Error bei Fehler
+     * @return array Erfolgs-/Fehlerinformationen
      */
     public function test_key() {
         if (empty($this->api_key)) {
-            return new WP_Error('empty_key', __('Kein API-Schlüssel konfiguriert.', 'alenseo'));
+            return array(
+                'success' => false,
+                'message' => __('Kein API-Schlüssel konfiguriert.', 'alenseo')
+            );
+        }
+        
+        // Überprüfen ob API-Schlüssel zu lang ist
+        if (strlen($this->api_key) > 100) {
+            return array(
+                'success' => false,
+                'message' => __('API-Schlüssel ist zu lang. Bitte überprüfen Sie den eingegebenen Schlüssel.', 'alenseo')
+            );
         }
         
         // Minimalen Prompt für den Test erstellen
         $result = $this->generate_text("Bitte antworte mit dem Wort: Test");
         
         if (is_wp_error($result)) {
-            return $result;
+            return array(
+                'success' => false,
+                'message' => $result->get_error_message()
+            );
         }
         
-        return true;
+        return array(
+            'success' => true,
+            'message' => __('API-Verbindung erfolgreich getestet!', 'alenseo'),
+            'model' => $this->model
+        );
     }
     
     /**
