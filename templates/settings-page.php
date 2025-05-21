@@ -28,8 +28,12 @@ if (isset($_POST['alenseo_save_settings']) && check_admin_referer('alenseo_setti
         $settings['claude_model'] = sanitize_text_field($_POST['claude_model']);
     }
     
-    // Post-Typen
-    $settings['post_types'] = isset($_POST['post_types']) ? array_map('sanitize_text_field', $_POST['post_types']) : array('post', 'page');
+    // Ensure the post types are saved and retrieved correctly
+    if (isset($_POST['post_types'])) {
+        $settings['post_types'] = array_map('sanitize_text_field', $_POST['post_types']);
+    } else {
+        $settings['post_types'] = array('post', 'page'); // Default post types
+    }
     
     // SEO-Elemente
     $settings['seo_elements'] = array(
@@ -47,6 +51,11 @@ if (isset($_POST['alenseo_save_settings']) && check_admin_referer('alenseo_setti
         'api_timeout' => isset($_POST['api_timeout']) ? intval($_POST['api_timeout']) : 30,
         'score_threshold' => isset($_POST['score_threshold']) ? intval($_POST['score_threshold']) : 70
     );
+
+    // ChatGPT API-Schlüssel speichern
+    if (isset($_POST['chatgpt_api_key'])) {
+        update_option('alenseo_chatgpt_api_key', sanitize_text_field($_POST['chatgpt_api_key']));
+    }
     
     // Einstellungen speichern
     update_option('alenseo_settings', $settings);
@@ -118,6 +127,7 @@ $post_types = get_post_types(array(
         <a href="#general" class="nav-tab nav-tab-active"><?php _e('Allgemein', 'alenseo'); ?></a>
         <a href="#api" class="nav-tab"><?php _e('Claude API', 'alenseo'); ?></a>
         <a href="#advanced" class="nav-tab"><?php _e('Erweitert', 'alenseo'); ?></a>
+        <a href="#chatgpt" class="nav-tab"><?php _e('ChatGPT API', 'alenseo'); ?></a>
     </div>
     
     <form method="post" action="">
@@ -271,6 +281,25 @@ $post_types = get_post_types(array(
                 </table>
             </div>
         </div>
+
+        <div id="chatgpt" class="alenseo-settings-tab">
+            <div class="alenseo-settings-section">
+                <h2><?php _e('ChatGPT API-Einstellungen', 'alenseo'); ?></h2>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php _e('API-Schlüssel', 'alenseo'); ?></th>
+                        <td>
+                            <input type="password" name="chatgpt_api_key" id="chatgpt_api_key" value="<?php echo esc_attr(get_option('alenseo_chatgpt_api_key')); ?>" class="regular-text">
+                            <button type="button" id="toggle_chatgpt_api_key" class="button button-secondary">
+                                <span class="dashicons dashicons-visibility"></span>
+                            </button>
+                            <p class="description"><?php _e('Gib deinen ChatGPT API-Schlüssel ein. Du kannst einen API-Schlüssel auf <a href="https://platform.openai.com/" target="_blank">platform.openai.com</a> erstellen.', 'alenseo'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         
         <p class="submit">
             <input type="submit" name="alenseo_save_settings" class="button button-primary" value="<?php esc_attr_e('Einstellungen speichern', 'alenseo'); ?>">
@@ -279,23 +308,28 @@ $post_types = get_post_types(array(
     
     <script>
     jQuery(document).ready(function($) {
-        // Tab-Navigation
+        // Tab-Navigation debuggen und sicherstellen, dass die Inhalte korrekt angezeigt werden
         $('.alenseo-settings-tab-nav a').on('click', function(e) {
             e.preventDefault();
-            
+
             // Aktiven Tab ändern
             $('.alenseo-settings-tab-nav a').removeClass('nav-tab-active');
             $(this).addClass('nav-tab-active');
-            
+
             // Tab-Inhalt ändern
             var target = $(this).attr('href').substring(1);
             $('.alenseo-settings-tab').removeClass('active');
             $('#' + target).addClass('active');
-            
-            // Speichere aktiven Tab in Session Storage
-            sessionStorage.setItem('alenseo_active_tab', target);
         });
-        
+
+        // Sicherstellen, dass der aktive Tab beim Laden korrekt gesetzt ist
+        var activeTab = sessionStorage.getItem('alenseo_active_tab');
+        if (activeTab) {
+            $('.alenseo-settings-tab-nav a[href="#' + activeTab + '"]').trigger('click');
+        } else {
+            $('.alenseo-settings-tab-nav a.nav-tab-active').trigger('click');
+        }
+
         // API-Schlüssel ein-/ausblenden
         $('#toggle_api_key').on('click', function() {
             var apiKeyField = $('#claude_api_key');
@@ -363,6 +397,20 @@ $post_types = get_post_types(array(
             var activeTab = $('.alenseo-settings-tab-nav a.nav-tab-active').attr('href').substring(1);
             sessionStorage.setItem('alenseo_active_tab', activeTab);
         });
+
+        // ChatGPT API-Schlüssel ein-/ausblenden
+        $('#toggle_chatgpt_api_key').on('click', function() {
+            var apiKeyField = $('#chatgpt_api_key');
+            var icon = $(this).find('.dashicons');
+
+            if (apiKeyField.attr('type') === 'password') {
+                apiKeyField.attr('type', 'text');
+                icon.removeClass('dashicons-visibility').addClass('dashicons-hidden');
+            } else {
+                apiKeyField.attr('type', 'password');
+                icon.removeClass('dashicons-hidden').addClass('dashicons-visibility');
+            }
+        });
     });
     </script>
     
@@ -394,3 +442,16 @@ $post_types = get_post_types(array(
     }
     </style>
 </div>
+
+<h2>KI-Integration</h2>
+<form method="post" action="options.php">
+    <?php settings_fields('alenseo_settings_group'); ?>
+    <?php do_settings_sections('alenseo_settings_group'); ?>
+    <table class="form-table">
+        <tr valign="top">
+            <th scope="row">Claude API-Schlüssel</th>
+            <td><input type="text" name="alenseo_claude_api_key" value="<?php echo esc_attr(get_option('alenseo_claude_api_key')); ?>" /></td>
+        </tr>
+    </table>
+    <?php submit_button(); ?>
+</form>

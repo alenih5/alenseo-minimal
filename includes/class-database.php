@@ -458,4 +458,83 @@ class Alenseo_Database {
         
         return $wpdb->get_col($query);
     }
+
+    /**
+     * Get the total number of posts based on selected post types.
+     *
+     * @return int Total post count.
+     */
+    public function get_total_posts() {
+        global $wpdb;
+        $settings = get_option('alenseo_settings', array());
+        $post_types = isset($settings['post_types']) ? $settings['post_types'] : array('post', 'page');
+        $post_types_placeholder = implode(",", array_fill(0, count($post_types), '%s'));
+
+        $query = $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ($post_types_placeholder);",
+            $post_types
+        );
+
+        return (int) $wpdb->get_var($query);
+    }
+
+    /**
+     * Get the number of analyzed posts.
+     *
+     * @return int Analyzed post count.
+     */
+    public function get_analyzed_posts() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'alenseo_analysis';
+        $query = "SELECT COUNT(DISTINCT post_id) FROM $table_name WHERE analyzed = 1;";
+        return (int) $wpdb->get_var($query);
+    }
+
+    /**
+     * Get the number of posts needing improvement.
+     *
+     * @return int Posts needing improvement count.
+     */
+    public function get_needs_improvement_posts() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'alenseo_analysis';
+        $query = "SELECT COUNT(DISTINCT post_id) FROM $table_name WHERE score < 50;";
+        return (int) $wpdb->get_var($query);
+    }
+
+    /**
+     * Get the number of posts without keywords.
+     *
+     * @return int Posts without keywords count.
+     */
+    public function get_no_keyword_posts() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'alenseo_keywords';
+        $query = "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->posts} p LEFT JOIN $table_name k ON p.ID = k.post_id WHERE k.post_id IS NULL AND p.post_status = 'publish';";
+        return (int) $wpdb->get_var($query);
+    }
+
+    /**
+     * Get the average SEO score.
+     *
+     * @return float Average score.
+     */
+    public function get_average_score() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'alenseo_analysis';
+        $query = "SELECT AVG(score) FROM $table_name WHERE analyzed = 1;";
+        return (float) $wpdb->get_var($query);
+    }
+
+    /**
+     * Get the total number of keywords.
+     *
+     * @return int Total keyword count.
+     */
+    public function get_total_keywords() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'alenseo_keywords';
+        $query = "SELECT COUNT(*) FROM $table_name;";
+        return (int) $wpdb->get_var($query);
+    }
 }

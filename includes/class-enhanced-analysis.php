@@ -606,4 +606,42 @@ class Alenseo_Enhanced_Analysis {
         
         return $result;
     }
+
+    /**
+     * Führt eine vollständige Analyse für einen Beitrag durch (analog zu Minimal Analysis)
+     *
+     * @param int $post_id Die Post-ID
+     * @return array Analyse-Ergebnisse (Score, Komponenten, Details)
+     */
+    public function analyze_post($post_id) {
+        $post = get_post($post_id);
+        if (!$post) {
+            return array('score' => 0, 'message' => __('Beitrag nicht gefunden.', 'alenseo'));
+        }
+        $keyword = get_post_meta($post_id, '_alenseo_keyword', true);
+        if (empty($keyword)) {
+            return array('score' => 0, 'message' => __('Kein Fokus-Keyword gesetzt.', 'alenseo'));
+        }
+        // Hauptanalyse durchführen
+        $content_result = $this->analyze_content($post, $keyword);
+        $meta_result = $this->analyze_meta_tags($post_id);
+        // Komponenten-Score extrahieren
+        $components = array(
+            'content_score' => isset($content_result['score']) ? $content_result['score'] : 0,
+            'meta_score' => isset($meta_result['score']) ? $meta_result['score'] : 0,
+            'title_score' => 0, // Optional: kann erweitert werden
+            'description_score' => isset($meta_result['details']['meta_description']['status']) && $meta_result['details']['meta_description']['status'] === 'good' ? 100 : 0,
+            'headings_score' => isset($content_result['details']['headings']['score']) ? $content_result['details']['headings']['score'] : 0
+        );
+        // Gesamtscore als Mittelwert
+        $score = round((($components['content_score'] + $components['meta_score']) / 2));
+        return array(
+            'score' => $score,
+            'components' => $components,
+            'details' => array(
+                'content' => $content_result,
+                'meta' => $meta_result
+            )
+        );
+    }
 }

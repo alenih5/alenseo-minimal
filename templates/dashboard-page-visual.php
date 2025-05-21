@@ -29,6 +29,16 @@ $filter_search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) :
 
 // Übersichtsdaten abrufen
 $overview_data = $alenseo_dashboard->get_overview_data();
+// Fallbacks für fehlende Felder (robust gegen leere oder inkompatible Daten)
+$overview_data = is_array($overview_data) ? $overview_data : array();
+$overview_data['average_score'] = isset($overview_data['average_score']) ? $overview_data['average_score'] : 0;
+$overview_data['optimized_count'] = isset($overview_data['optimized_count']) ? $overview_data['optimized_count'] : 0;
+// Map field names between different versions
+$overview_data['to_improve_count'] = isset($overview_data['needs_improvement_count']) ? $overview_data['needs_improvement_count'] : 
+    (isset($overview_data['to_improve_count']) ? $overview_data['to_improve_count'] : 0);
+$overview_data['no_keywords_count'] = isset($overview_data['no_keyword_count']) ? $overview_data['no_keyword_count'] : 
+    (isset($overview_data['no_keywords_count']) ? $overview_data['no_keywords_count'] : 0);
+$overview_data['total_count'] = isset($overview_data['total_count']) ? $overview_data['total_count'] : 0;
 
 // Verteilung nach Post-Typen berechnen
 $post_types = get_post_types(array('public' => true), 'objects');
@@ -145,7 +155,14 @@ $cache_hit_rate = round($cache_hit_rate);
     <!-- Versteckte Felder für Chart.js -->
     <input type="hidden" id="optimized-count" value="<?php echo esc_attr($overview_data['optimized_count']); ?>">
     <input type="hidden" id="improve-count" value="<?php echo esc_attr($overview_data['to_improve_count']); ?>">
-    <input type="hidden" id="no-keywords-count" value="<?php echo esc_attr($overview_data['no_keywords_count']); ?>">
+    <input type="hidden" id="no-keywords-count" value="<?php echo esc_attr($overview_data['no_keywords_count']); ?>"><?php
+    // Debugging Ausgabe wenn im debug modus
+    if (defined('WP_DEBUG') && WP_DEBUG === true && isset($_GET['debug'])): ?>
+    <div style="background: #f1f1f1; padding: 10px; margin: 10px 0; border: 1px solid #ddd;">
+        <h4>Debug: Overview Data</h4>
+        <pre><?php print_r($overview_data); ?></pre>
+    </div>
+    <?php endif; ?>
     
     <?php foreach ($post_type_counts as $type => $data): ?>
     <div class="post-type-data" data-label="<?php echo esc_attr($data['name']); ?>" data-count="<?php echo esc_attr($data['count']); ?>"></div>

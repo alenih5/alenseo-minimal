@@ -33,40 +33,23 @@ function alenseo_test_claude_api() {
     // API-Schlüssel aus der Anfrage holen
     $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
     
+    // Ensure the Claude API key is validated and status updated correctly
     if (empty($api_key)) {
         wp_send_json_error(array('message' => __('Kein API-Schlüssel angegeben.', 'alenseo')));
         return;
     }
-    
-    // API-Schlüssel temporär in den Einstellungen speichern für den Test
-    $settings = get_option('alenseo_settings', array());
-    $settings['claude_api_key'] = $api_key;
-    update_option('alenseo_settings', $settings);
-    
-    // Claude API-Klasse laden
-    require_once ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php';
+
+    // Test the API key using the Claude API class
     $claude_api = new Alenseo_Claude_API();
-    
-    // API-Test durchführen
     $test_result = $claude_api->test_api_key();
-    
+
     if (isset($test_result['success']) && $test_result['success']) {
-        // Status in Optionen speichern für Statusanzeige im Dashboard
         update_option('alenseo_api_status', 'active');
-        wp_send_json_success($test_result);
+        wp_send_json_success(array('message' => __('API-Verbindung erfolgreich.', 'alenseo')));
     } else {
-        // Fehler beim API-Test
         update_option('alenseo_api_status', 'error');
-        
-        // Wenn test_result ein WP_Error-Objekt ist, in Array umwandeln
-        if (is_wp_error($test_result)) {
-            $test_result = array(
-                'success' => false,
-                'message' => $test_result->get_error_message()
-            );
-        }
-        
-        wp_send_json_error($test_result);
+        $error_message = is_wp_error($test_result) ? $test_result->get_error_message() : __('Unbekannter Fehler.', 'alenseo');
+        wp_send_json_error(array('message' => $error_message));
     }
 }
 add_action('wp_ajax_alenseo_test_claude_api', 'alenseo_test_claude_api');

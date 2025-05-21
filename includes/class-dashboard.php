@@ -55,6 +55,72 @@ class Alenseo_Dashboard {
         add_action('wp_ajax_alenseo_get_post_data', array($this, 'get_post_data'));
         add_action('wp_ajax_alenseo_get_score_history', array($this, 'get_score_history'));
         add_action('wp_ajax_alenseo_get_stats', array($this, 'get_stats'));
+
+        // Scripts und Styles für das Dashboard laden
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_dashboard_assets'));
+    }
+
+    /**
+     * Scripts und Styles für das Dashboard laden
+     *
+     * @since    1.0.0
+     * @param    string    $hook    Der aktuelle Admin-Hook
+     */
+    public function enqueue_dashboard_assets($hook) {
+        // Prüfen, ob wir auf der Dashboard-Seite sind
+        if (strpos($hook, 'page_alenseo-dashboard') === false && $hook !== 'toplevel_page_alenseo-dashboard') {
+            return;
+        }
+
+        // Visual Dashboard CSS
+        $css_path = plugin_dir_path(dirname(__FILE__)) . 'assets/css/dashboard-visual.css';
+        if (file_exists($css_path)) {
+            wp_enqueue_style(
+                'alenseo-dashboard-visual-css',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/css/dashboard-visual.css',
+                array(),
+                filemtime($css_path)
+            );
+        } else {
+            error_log('CSS-Datei nicht gefunden: ' . $css_path);
+        }
+
+        // Visual Dashboard JS
+        $js_path = plugin_dir_path(dirname(__FILE__)) . 'assets/js/dashboard-visual.js';
+        if (file_exists($js_path)) {
+            // Chart.js laden (falls benötigt)
+            wp_enqueue_script(
+                'chartjs',
+                'https://cdn.jsdelivr.net/npm/chart.js',
+                array(),
+                '3.9.1',
+                true
+            );
+
+            // Dashboard JS laden
+            wp_enqueue_script(
+                'alenseo-dashboard-visual-js',
+                plugin_dir_url(dirname(__FILE__)) . 'assets/js/dashboard-visual.js',
+                array('jquery', 'chartjs'),
+                filemtime($js_path),
+                true
+            );
+
+            // AJAX-URL und Nonce für JavaScript
+            wp_localize_script('alenseo-dashboard-visual-js', 'alenseoData', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('alenseo_ajax_nonce'),
+                'messages' => array(
+                    'selectAction' => __('Bitte wähle eine Aktion aus.', 'alenseo'),
+                    'selectContent' => __('Bitte wähle mindestens einen Inhalt aus.', 'alenseo'),
+                    'analyzing' => __('Wird analysiert...', 'alenseo'),
+                    'error' => __('Es ist ein Fehler aufgetreten.', 'alenseo'),
+                    'allDone' => __('Alle Inhalte wurden verarbeitet.', 'alenseo')
+                )
+            ));
+        } else {
+            error_log('JS-Datei nicht gefunden: ' . $js_path);
+        }
     }
 
     /**
@@ -119,8 +185,7 @@ class Alenseo_Dashboard {
      */
     public function display_overview_page() {
         // Pfad zum Template
-        $template_path = plugin_dir_path(dirname(__FILE__)) . 'templates/dashboard-page.php';
-        
+        $template_path = plugin_dir_path(dirname(__FILE__)) . 'templates/dashboard-page-visual.php';
         // Prüfen, ob die Template-Datei existiert
         if (file_exists($template_path)) {
             // Template einbinden
@@ -254,71 +319,18 @@ class Alenseo_Dashboard {
      * @return array Übersichtsdaten
      */
     public function get_overview_data() {
-        // Verwende Transient für bessere Performance
-        $cache_key = 'alenseo_overview_data';
-        $cached_data = get_transient($cache_key);
-        
-        if ($cached_data !== false) {
-            return $cached_data;
-        }
-        
+        // Echtzeitdaten abrufen
         $data = array(
-            'total_count' => 0,
-            'optimized_count' => 0,
-            'needs_improvement_count' => 0,
-            'no_keyword_count' => 0,
-            'average_score' => 0,
-            'keywords_count' => 0,
-            'top_keywords' => array(),
-            'items' => array()
+            'total_count' => $this->db->get_total_posts(),
+            'optimized_count' => $this->db->get_analyzed_posts(),
+            'needs_improvement_count' => $this->db->get_needs_improvement_posts(),
+            'no_keyword_count' => $this->db->get_no_keyword_posts(),
+            'average_score' => $this->db->get_average_score(),
+            'keywords_count' => $this->db->get_total_keywords(),
+            'top_keywords' => $this->db->get_top_keywords(),
+            'items' => $this->get_all_posts()
         );
-        
-        // Daten über Datenbank-Klasse abrufen, falls verfügbar
-        global $alenseo_database;
-        if (isset($alenseo_database) && method_exists($alenseo_database, 'get_average_scores')) {
-            $average_scores = $alenseo_database->get_average_scores();
-            if ($average_scores && isset($average_scores['avg_score'])) {
-                $data['average_score'] = round($average_scores['avg_score']);
-            }
-        }
-        
-        // Posts abrufen
-        $posts = $this->get_all_posts();
-        $data['items'] = $posts;
-        
-        // Zählen
-        $total_score = 0;
-        $score_count = 0;
-        
-        foreach ($posts as $post) {
-            $data['total_count']++;
-            
-            if (isset($post->seo_score) && $post->seo_score > 0) {
-                $total_score += $post->seo_score;
-                $score_count++;
-                
-                if ($post->seo_score >= 80) {
-                    $data['optimized_count']++;
-                } elseif ($post->seo_score >= 50) {
-                    $data['needs_improvement_count']++;
-                } else {
-                    $data['needs_improvement_count']++;
-                }
-            }
-            
-            if (empty($post->keyword)) {
-                $data['no_keyword_count']++;
-            }
-        }
-        
-        // Durchschnittliche Punktzahl berechnen, falls nicht aus der Datenbank verfügbar
-        if ($data['average_score'] === 0 && $score_count > 0) {
-            $data['average_score'] = round($total_score / $score_count);
-        }
-        
-        // In Transient speichern (15 Minuten gültig)
-        set_transient($cache_key, $data, 15 * MINUTE_IN_SECONDS);
-        
+
         return $data;
     }
 

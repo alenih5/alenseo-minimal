@@ -3,7 +3,7 @@
  * Plugin Name: Alenseo SEO Minimal
  * Plugin URI: https://www.imponi.ch
  * Description: Ein schlankes SEO-Plugin mit Claude AI-Integration für WordPress
- * Version: 2.0.4
+ * Version: 2.0.13
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: Alen
@@ -37,7 +37,7 @@ if (defined('ALENSEO_MINIMAL_VERSION')) {
 
 define('ALENSEO_MINIMAL_DIR', plugin_dir_path(__FILE__));
 define('ALENSEO_MINIMAL_URL', plugin_dir_url(__FILE__));
-define('ALENSEO_MINIMAL_VERSION', '2.0.4');  // Version auf 2.0.4 aktualisiert
+define('ALENSEO_MINIMAL_VERSION', '2.0.13');  // Version auf 2.0.13 aktualisiert
 define('ALENSEO_PLUGIN_FILE', __FILE__);
 
 // Sichere Datei-Einbindung

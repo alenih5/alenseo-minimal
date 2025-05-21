@@ -110,13 +110,13 @@ class Alenseo_WPBakery_Integration {
         
         // Keyword
         $alenseo_keyword = get_post_meta($post_id, '_alenseo_keyword', true);
-        if (!empty($alenseo_keyword) && empty($wpbakery_keyword)) {
+        if (!empty($alenseo_keyword) && empty(get_post_meta($post_id, 'vc_seo_keyword', true))) {
             update_post_meta($post_id, 'vc_seo_keyword', $alenseo_keyword);
         }
         
         // Meta Description
         $alenseo_description = get_post_meta($post_id, '_alenseo_meta_description', true);
-        if (!empty($alenseo_description) && empty($wpbakery_description)) {
+        if (!empty($alenseo_description) && empty(get_post_meta($post_id, 'vc_description', true))) {
             update_post_meta($post_id, 'vc_description', $alenseo_description);
         }
     }
