@@ -64,7 +64,7 @@ foreach ($post_types as $post_type_name => $post_type_obj) {
 }
 
 // Zusätzliche Statistikdaten
-$claude_api = new Alenseo_Claude_API();
+$claude_api = new \Alenseo\Alenseo_Claude_API();
 $claude_api_stats = array(
     'daily_requests' => get_option('alenseo_daily_requests', 0),
     'daily_limit' => 50, // Beispiel: 50 Anfragen pro Tag

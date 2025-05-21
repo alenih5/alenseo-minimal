@@ -33,7 +33,7 @@ install_wp() {
 	curl -o "$WP_CORE_DIR/wp-tests-config.php" -fSL https://raw.githubusercontent.com/WordPress/wordpress-develop/master/wp-tests-config-sample.php
 	sed -i "s/youremptytestdbnamehere/$DB_NAME/" "$WP_CORE_DIR/wp-tests-config.php"
 	sed -i "s/yourusernamehere/$DB_USER/" "$WP_CORE_DIR/wp-tests-config.php"
-	sed -i "s/yourpasswordhere/$DB_PASS/" "$WP_CORE_DIR/wp-tests-config.php"
+	sed -i "s/yourpasswordhere/$(echo $DB_PASS | sed 's/[\&/]/\\&/g')/" "$WP_CORE_DIR/wp-tests-config.php"
 	sed -i "s|localhost|$DB_HOST|" "$WP_CORE_DIR/wp-tests-config.php"
 }
 

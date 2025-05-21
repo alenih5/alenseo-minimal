@@ -3,7 +3,7 @@
         'name' => 'alenseo/seo-plugin',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '4cffa5abf14209ecb767377ea126e87a2cf67662',
+        'reference' => '6ce0f5e009d0ee0da1a036ca8dcd0fca5736ff29',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'alenseo/seo-plugin' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '4cffa5abf14209ecb767377ea126e87a2cf67662',
+            'reference' => '6ce0f5e009d0ee0da1a036ca8dcd0fca5736ff29',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

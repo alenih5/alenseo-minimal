@@ -5,8 +5,8 @@ define( 'ABSPATH', dirname( __FILE__ ) . '/wordpress/' );
 
 // Test database settings.
 define( 'DB_NAME', 'wordpress_test' );
-define( 'DB_USER', 'root' );
-define( 'DB_PASSWORD', '' );
+define( 'DB_USER', 'roottest' );
+define( 'DB_PASSWORD', 'nSJ03YY/YeeDrQ@' );
 define( 'DB_HOST', '127.0.0.1' );
 define( 'DB_CHARSET', 'utf8' );
 define( 'DB_COLLATE', '' );

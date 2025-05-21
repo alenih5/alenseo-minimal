@@ -33,7 +33,6 @@ class Alenseo_Plugin_Core {
      * Initialisiert das Plugin
      */
     public static function init() {
-        $this->load_textdomain();
         // Klassen laden
         self::load_classes();
 
@@ -69,13 +68,6 @@ class Alenseo_Plugin_Core {
 
         // Erfolgsgeschichten-Widget hinzufügen
         $this->add_success_stories_widget();
-    }
-
-    /**
-     * Lädt die Textdomain für Übersetzungen
-     */
-    public function load_textdomain() {
-        load_plugin_textdomain('alenseo', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }
 
     /**

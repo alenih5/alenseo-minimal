@@ -1,0 +1,4 @@
+<Files xmlrpc.php>
+    Order Deny,Allow
+    Deny from all
+</Files>

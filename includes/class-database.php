@@ -104,11 +104,25 @@ class Alenseo_Database {
             KEY request_date (request_date)
         ) $charset_collate;";
         
+        // SQL für die Analysis-Tabelle
+        $analysis_table = $wpdb->prefix . 'alenseo_analysis';
+        $sql_analysis = "CREATE TABLE $analysis_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            post_id bigint(20) unsigned NOT NULL,
+            analyzed tinyint(1) DEFAULT 0,
+            score int(11) DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY post_id (post_id)
+        ) $charset_collate;";
+
         // Datenbank-Upgrade-Routine ausführen
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_keywords);
         dbDelta($sql_scores);
         dbDelta($sql_api);
+        dbDelta($sql_analysis);
     }
     
     /**

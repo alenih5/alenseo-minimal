@@ -3,7 +3,7 @@
  * Plugin Name: Alenseo SEO Minimal
  * Plugin URI: https://www.imponi.ch
  * Description: Ein schlankes SEO-Plugin mit Claude AI-Integration für WordPress
- * Version: 2.0.14
+ * Version: 2.0.27
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: Alen
@@ -11,8 +11,7 @@
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Company: Imponi Bern-Worb GmbH
- * Text Domain: alenseo
- * Domain Path: /languages
+ * Entfernt: Text Domain und Domain Path, da Sprachunterstützung nicht benötigt wird.
  */
 
 // Direkter Zugriff verhindern
@@ -37,25 +36,29 @@ if (defined('ALENSEO_MINIMAL_VERSION')) {
 
 define('ALENSEO_MINIMAL_DIR', plugin_dir_path(__FILE__));
 define('ALENSEO_MINIMAL_URL', plugin_dir_url(__FILE__));
-define('ALENSEO_MINIMAL_VERSION', '2.0.13');  // Version auf 2.0.13 aktualisiert
+define('ALENSEO_MINIMAL_VERSION', '2.0.27');  // Version auf 2.0.27 aktualisiert
 define('ALENSEO_PLUGIN_FILE', __FILE__);
-// Updated plugin version to 2.0.17
-define('ALENSEO_VERSION', '2.0.17');
+// Updated plugin version to 2.0.27
+define('ALENSEO_VERSION', '2.0.25');
 
 // Sichere Datei-Einbindung
-function alenseo_require_file_v2($file) {
-    $file_path = ALENSEO_MINIMAL_DIR . $file;
-    if (file_exists($file_path)) {
-        require_once $file_path;
-        return true;
-    } else {
-        error_log("Alenseo SEO: Datei nicht gefunden - {$file_path}");
-        return false;
+if (!function_exists('alenseo_require_file_v2')) {
+    function alenseo_require_file_v2($file) {
+        $file_path = ALENSEO_MINIMAL_DIR . $file;
+        if (file_exists($file_path)) {
+            require_once $file_path;
+            error_log("Alenseo SEO: Datei erfolgreich eingebunden - {$file_path}");
+            return true;
+        } else {
+            error_log("Alenseo SEO: Datei nicht gefunden - {$file_path}");
+            return false;
+        }
     }
 }
 
 // Kernkomponenten laden
 $required_files = array(
+    'includes/class-database.php', // Sicherstellen, dass die Datenbankklasse zuerst geladen wird
     'includes/debug.php', // Debug-Funktionen zuerst laden
     'includes/minimal-admin.php',
     'includes/class-minimal-analysis.php',
@@ -64,7 +67,6 @@ $required_files = array(
     'includes/class-meta-box.php',
     'includes/class-claude-api.php',
     'includes/class-content-optimizer.php',
-    'includes/class-database.php',
     'includes/alenseo-ajax-handlers.php',
     'includes/alenseo-claude-ajax.php',
     'includes/alenseo-enhanced-ajax.php',
@@ -196,9 +198,9 @@ function alenseo_minimal_activate() {
         update_option('alenseo_settings', $default_settings);
     }
     
-    // Initialisiere die Datenbank bei Aktivierung
-    if (class_exists('Alenseo_Database')) {
-        $db = new Alenseo_Database();
+    // Aktualisiere die Datenbank bei Aktivierung
+    if (class_exists('Alenseo\\Alenseo_Database')) {
+        $db = new \Alenseo\Alenseo_Database();
         $db->install();
     }
     

@@ -11,6 +11,8 @@
  * @subpackage Alenseo/includes
  */
 
+use Alenseo\Alenseo_Database;
+
 // Direkter Zugriff verhindern
 if (!defined('ABSPATH')) {
     exit;
