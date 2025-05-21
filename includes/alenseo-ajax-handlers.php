@@ -1,4 +1,6 @@
 <?php
+namespace Alenseo;
+
 /**
  * AJAX-Handler für Alenseo SEO
  *
@@ -14,6 +16,21 @@
 // Direkter Zugriff verhindern
 if (!defined('ABSPATH')) {
     exit;
+}
+
+class Alenseo_Ajax_Handlers {
+    public function secure_ajax_request() {
+        check_ajax_referer('alenseo_nonce', 'security');
+
+        $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';
+
+        // Process the sanitized data
+        wp_send_json_success(['message' => 'Request processed securely', 'data' => $data]);
+    }
+
+    public function register_ajax_handlers() {
+        add_action('wp_ajax_secure_request', [$this, 'secure_ajax_request']);
+    }
 }
 
 /**
@@ -350,3 +367,45 @@ function alenseo_bulk_analyze_ajax() {
     ));
 }
 add_action('wp_ajax_alenseo_bulk_analyze', 'alenseo_bulk_analyze_ajax');
+
+/**
+ * AJAX-Handler für Claude API Textgenerierung
+ */
+function alenseo_claude_generate_text_ajax() {
+    // Nonce prüfen
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'alenseo_ajax_nonce')) {
+        wp_send_json_error(array('message' => 'Sicherheitsüberprüfung fehlgeschlagen.'));
+        return;
+    }
+
+    // Benutzerrechte prüfen
+    if (!current_user_can('edit_posts')) {
+        wp_send_json_error(array('message' => 'Unzureichende Berechtigungen.'));
+        return;
+    }
+
+    // Prompt prüfen
+    if (!isset($_POST['prompt'])) {
+        wp_send_json_error(array('message' => 'Fehlender Prompt.'));
+        return;
+    }
+
+    $prompt = sanitize_text_field($_POST['prompt']);
+
+    // Claude API verwenden
+    if (!class_exists('Alenseo_Claude_API')) {
+        require_once ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php';
+    }
+
+    $claude_api = new Alenseo_Claude_API();
+    $result = $claude_api->generate_text($prompt);
+
+    if (is_wp_error($result)) {
+        wp_send_json_error(array('message' => $result->get_error_message()));
+        return;
+    }
+
+    wp_send_json_success(array('text' => $result));
+}
+
+add_action('wp_ajax_alenseo_claude_generate_text', 'alenseo_claude_generate_text_ajax');

@@ -1,4 +1,6 @@
 <?php
+namespace Alenseo;
+
 /**
  * Datenbank-Klasse für Alenseo SEO
  *
@@ -536,5 +538,58 @@ class Alenseo_Database {
         $table_name = $wpdb->prefix . 'alenseo_keywords';
         $query = "SELECT COUNT(*) FROM $table_name;";
         return (int) $wpdb->get_var($query);
+    }
+
+    /**
+     * Führt ein Upgrade der Datenbank durch
+     */
+    public static function upgrade() {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'alenseo_data';
+
+        // Neue Spalten hinzufügen, falls nicht vorhanden
+        if (!self::column_exists($table_name, 'new_column')) {
+            $wpdb->query("ALTER TABLE $table_name ADD COLUMN new_column VARCHAR(255) DEFAULT NULL");
+        }
+
+        // Weitere Upgrade-Logik hier hinzufügen
+    }
+
+    /**
+     * Prüft, ob eine Spalte in der Tabelle existiert
+     */
+    private static function column_exists($table_name, $column_name) {
+        global $wpdb;
+        $query = $wpdb->prepare(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_NAME = %s AND COLUMN_NAME = %s",
+            $table_name,
+            $column_name
+        );
+        return $wpdb->get_var($query) > 0;
+    }
+
+    public function get_optimized_results($table, $columns = '*', $where = '', $order_by = '', $limit = '') {
+        global $wpdb;
+        $query = "SELECT $columns FROM {$wpdb->prefix}$table";
+
+        if ($where) {
+            $query .= " WHERE $where";
+        }
+
+        if ($order_by) {
+            $query .= " ORDER BY $order_by";
+        }
+
+        if ($limit) {
+            $query .= " LIMIT $limit";
+        }
+
+        return $wpdb->get_results($query);
+    }
+
+    // Example usage
+    public function get_recent_posts($limit = 10) {
+        return $this->get_optimized_results('posts', '*', "post_status = 'publish'", 'post_date DESC', $limit);
     }
 }

@@ -1,4 +1,6 @@
 <?php
+namespace Alenseo;
+
 /**
  * Claude API-Klasse für Alenseo SEO
  * Diese Klasse ist verantwortlich für die Kommunikation mit der Claude AI API
@@ -39,7 +41,12 @@ class Alenseo_Claude_API {
      * 
      * @var string
      */
-    private $api_url = 'https://api.anthropic.com/v1/messages';
+    private $api_url = 'https://api.anthropic.com/v1/complete';
+    private $api_headers = array(
+        'Content-Type' => 'application/json',
+        'anthropic-version' => '2023-06-01',
+        'x-api-key' => '' // API-Schlüssel wird dynamisch hinzugefügt
+    );
     
     /**
      * Rate-Limit-Tracking
@@ -297,15 +304,12 @@ class Alenseo_Claude_API {
         update_option('alenseo_api_usage', $api_usage);
         
         // Request an API senden
+        $this->api_headers['x-api-key'] = $this->api_key;
         $response = wp_remote_post(
             $this->api_url,
             array(
                 'timeout' => 60,
-                'headers' => array(
-                    'Content-Type' => 'application/json',
-                    'x-api-key' => $this->api_key,
-                    'anthropic-version' => '2023-06-01'
-                ),
+                'headers' => $this->api_headers,
                 'body' => json_encode($request_data)
             )
         );
@@ -317,7 +321,10 @@ class Alenseo_Claude_API {
         }
         
         // Erfolgreiche Antwort verarbeiten
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $body = $this->parse_response($response);
+        if (is_wp_error($body)) {
+            return $body;
+        }
         
         if (!isset($body['content'][0]['text'])) {
             error_log('Alenseo Claude API: Unerwartetes Antwortformat');
@@ -360,81 +367,78 @@ class Alenseo_Claude_API {
      * @return WP_Error|false WP_Error bei Fehler, false bei Erfolg
      */
     private function handle_api_error($response) {
-        // Wenn bereits ein WP_Error, direkt zurückgeben
         if (is_wp_error($response)) {
-            $error_message = $response->get_error_message();
-            error_log('Alenseo Claude API Error: ' . $error_message);
-            
-            // API-Fehler in der Datenbank protokollieren
-            $this->update_rate_limits(0, 'error', false, $error_message);
-            
             return $response;
         }
-        
-        $response_code = wp_remote_retrieve_response_code($response);
-        
-        // Wenn kein 200er Code, Fehler zurückgeben
-        if ($response_code !== 200) {
-            $error_message = wp_remote_retrieve_response_message($response);
-            $body = wp_remote_retrieve_body($response);
-            $error_data = json_decode($body, true);
-            
-            // Detaillierte Fehlermeldung aus dem Body extrahieren, falls vorhanden
-            if (!empty($error_data['error']) && !empty($error_data['error']['message'])) {
-                $error_message = $error_data['error']['message'];
-            }
-            
-            error_log("Alenseo Claude API Error ({$response_code}): {$error_message}");
-            
-            // Häufige API-Fehler mit benutzerfreundlichen Meldungen abfangen
-            switch ($response_code) {
-                case 400:
-                    return new WP_Error(
-                        'bad_request',
-                        __('Ungültige Anfrage an die API. Möglicherweise ist der Prompt zu lang.', 'alenseo')
-                    );
-                    
-                case 401:
-                    return new WP_Error(
-                        'unauthorized',
-                        __('Ungültiger API-Schlüssel oder Authentifizierungsfehler.', 'alenseo')
-                    );
-                    
-                case 403:
-                    return new WP_Error(
-                        'forbidden',
-                        __('Keine Berechtigung für diese API-Anfrage.', 'alenseo')
-                    );
-                    
-                case 404:
-                    return new WP_Error(
-                        'not_found',
-                        __('API-Endpunkt nicht gefunden.', 'alenseo')
-                    );
-                    
-                case 429:
-                    return new WP_Error(
-                        'rate_limited',
-                        __('API-Limit erreicht. Bitte versuche es später erneut.', 'alenseo')
-                    );
-                    
-                case 500:
-                case 502:
-                case 503:
-                case 504:
-                    return new WP_Error(
-                        'server_error',
-                        __('API-Serverfehler. Bitte versuche es später erneut.', 'alenseo')
-                    );
-                    
-                default:
-                    return new WP_Error(
-                        'api_error',
-                        sprintf(__('API-Fehler: %s (Code: %s)', 'alenseo'), $error_message, $response_code)
-                    );
-            }
+
+        $code = wp_remote_retrieve_response_code($response);
+        if ($code !== 200) {
+            $message = wp_remote_retrieve_response_message($response);
+            return new WP_Error('api_error', $message);
         }
-        
-        return false; // Kein Fehler
+
+        return false;
+    }
+
+    /**
+     * JSON-Antworten parsen
+     */
+    private function parse_response($response) {
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (isset($body['error'])) {
+            return new WP_Error('api_error', $body['error']['message']);
+        }
+
+        return $body;
+    }
+
+    /**
+     * AJAX-Handler für Textgenerierung
+     */
+    public static function ajax_generate_text() {
+        check_ajax_referer('alenseo_settings_nonce', 'security');
+
+        $prompt = isset($_POST['prompt']) ? sanitize_text_field($_POST['prompt']) : '';
+        $options = isset($_POST['options']) ? json_decode(stripslashes($_POST['options']), true) : array();
+
+        $instance = new self();
+        $result = $instance->generate_text($prompt, $options);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        } else {
+            wp_send_json_success(array('text' => $result));
+        }
+    }
+
+    /**
+     * AJAX-Handler registrieren
+     */
+    public static function register_ajax_handlers() {
+        add_action('wp_ajax_alenseo_generate_text', array(__CLASS__, 'ajax_generate_text'));
+    }
+
+    public function get_cached_response($key, $callback, $expiration = 3600) {
+        $cached = get_transient($key);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $response = $callback();
+        if ($response) {
+            set_transient($key, $response, $expiration);
+        }
+
+        return $response;
+    }
+
+    public function fetch_keywords($prompt) {
+        $cache_key = 'claude_keywords_' . md5($prompt);
+        return $this->get_cached_response($cache_key, function() use ($prompt) {
+            // ...existing API request logic...
+            $response = $this->send_request($prompt);
+            return $response;
+        });
     }
 }

@@ -48,86 +48,32 @@ jQuery(document).ready(function($) {
      * Keywords generieren
      */
     function generateKeywords(pageId, button) {
-        // Finde den Container für die Keyword-Eingabe
-        const row = button.closest('tr');
-        if (!row) return;
+        const prompt = `Generiere Keywords für die Seite mit der ID: ${pageId}`;
 
-        // Deaktiviere den Button und zeige Ladeanimation
-        button.disabled = true;
-        button.innerHTML = '<span class="dashicons dashicons-update spin"></span>';
-
-        // Prüfe, ob bereits ein Suggestions-Container existiert und entferne ihn
-        const existingContainer = document.querySelector(`.alenseo-keyword-suggestions-container[data-id="${pageId}"]`);
-        if (existingContainer) {
-            existingContainer.remove();
-        }
-
-        // Erstelle einen Container für die Keyword-Vorschläge
-        const suggestionsContainer = document.createElement('div');
-        suggestionsContainer.className = 'alenseo-keyword-suggestions-container';
-        suggestionsContainer.dataset.id = pageId;
-        suggestionsContainer.innerHTML = '<div class="alenseo-keyword-suggestions-loading"><span class="dashicons dashicons-update spin"></span> Generiere Keyword-Vorschläge...</div>';
-
-        // Füge den Container nach der Zeile ein
-        row.parentNode.insertBefore(suggestionsContainer, row.nextSibling);
-
-        // Hole Keyword-Vorschläge vom Server
         $.ajax({
-            url: alenseoData.ajaxUrl,
-            type: 'POST',
+            url: ajaxurl,
+            method: 'POST',
             data: {
-                action: 'alenseo_generate_keywords',
-                post_id: pageId,
-                nonce: alenseoData.nonce
+                action: 'alenseo_claude_generate_text',
+                nonce: alenseo_ajax.nonce,
+                prompt: prompt
+            },
+            beforeSend: function() {
+                $(button).text('Generieren...').prop('disabled', true);
             },
             success: function(response) {
-                // Button zurücksetzen
-                button.disabled = false;
-                button.innerHTML = '<span class="dashicons dashicons-lightbulb"></span>';
-
-                if (response.success && response.data && response.data.keywords && response.data.keywords.length > 0) {
-                    // Keyword-Vorschläge anzeigen
-                    renderKeywordSuggestions(suggestionsContainer, response.data.keywords, pageId);
+                if (response.success) {
+                    const keywords = response.data.text;
+                    $(`#keywords-${pageId}`).val(keywords);
                 } else {
-                    // Fehlermeldung anzeigen
-                    suggestionsContainer.innerHTML = `
-                        <div class="alenseo-keyword-suggestions-error">
-                            <p>${response.data ? response.data.message || 'Keine Keyword-Vorschläge gefunden.' : 'Fehler beim Abrufen der Keyword-Vorschläge.'}</p>
-                            <button class="alenseo-keyword-suggestions-close" data-id="${pageId}">Schließen</button>
-                        </div>
-                    `;
-
-                    // Event-Listener für Schließen-Button
-                    const closeButton = suggestionsContainer.querySelector('.alenseo-keyword-suggestions-close');
-                    if (closeButton) {
-                        closeButton.addEventListener('click', function() {
-                            suggestionsContainer.remove();
-                        });
-                    }
+                    alert('Fehler: ' + response.data.message);
                 }
             },
-            error: function(xhr, status, error) {
-                console.error('Error generating keywords:', error);
-                
-                // Button zurücksetzen
-                button.disabled = false;
-                button.innerHTML = '<span class="dashicons dashicons-lightbulb"></span>';
-                
-                // Fehlermeldung anzeigen
-                suggestionsContainer.innerHTML = `
-                    <div class="alenseo-keyword-suggestions-error">
-                        <p>Fehler beim Generieren von Keyword-Vorschlägen. Bitte versuchen Sie es später erneut.</p>
-                        <button class="alenseo-keyword-suggestions-close" data-id="${pageId}">Schließen</button>
-                    </div>
-                `;
-
-                // Event-Listener für Schließen-Button
-                const closeButton = suggestionsContainer.querySelector('.alenseo-keyword-suggestions-close');
-                if (closeButton) {
-                    closeButton.addEventListener('click', function() {
-                        suggestionsContainer.remove();
-                    });
-                }
+            error: function() {
+                alert('Ein Fehler ist aufgetreten.');
+            },
+            complete: function() {
+                $(button).text('Generieren').prop('disabled', false);
             }
         });
     }

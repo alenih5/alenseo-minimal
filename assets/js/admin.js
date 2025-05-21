@@ -269,4 +269,120 @@ jQuery(document).ready(function($) {
             }
         });
     });
+    
+    // Claude API Textgenerierung
+    $('#generate-text-button').on('click', function(e) {
+        e.preventDefault();
+
+        var prompt = $('#text-prompt').val();
+        if (!prompt) {
+            alert('Bitte geben Sie einen Prompt ein.');
+            return;
+        }
+
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'alenseo_claude_generate_text',
+                nonce: alenseo_ajax.nonce,
+                prompt: prompt
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#generated-text').text(response.data.text);
+                } else {
+                    alert('Fehler: ' + response.data.message);
+                }
+            },
+            error: function() {
+                alert('Ein Fehler ist aufgetreten.');
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const lazyLoadSections = document.querySelectorAll('[data-lazy-load]');
+
+    lazyLoadSections.forEach(section => {
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const url = section.getAttribute('data-lazy-load');
+                    fetch(url)
+                        .then(response => response.text())
+                        .then(html => {
+                            section.innerHTML = html;
+                        });
+                    observer.unobserve(section);
+                }
+            });
+        });
+
+        observer.observe(section);
+    });
+
+    // Add tooltips to elements with data-tooltip attribute
+    const tooltipElements = document.querySelectorAll('[data-tooltip]');
+
+    tooltipElements.forEach(el => {
+        el.addEventListener('mouseenter', function () {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.innerText = el.getAttribute('data-tooltip');
+            document.body.appendChild(tooltip);
+
+            const rect = el.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + window.scrollX}px`;
+            tooltip.style.top = `${rect.top + window.scrollY - tooltip.offsetHeight}px`;
+        });
+
+        el.addEventListener('mouseleave', function () {
+            document.querySelectorAll('.tooltip').forEach(tip => tip.remove());
+        });
+    });
+
+    // Interactive tutorial logic
+    const tutorialSteps = [
+        {
+            element: '#menu-dashboard',
+            message: 'Hier finden Sie das Dashboard mit allen wichtigen Informationen.'
+        },
+        {
+            element: '#menu-settings',
+            message: 'Hier können Sie die Plugin-Einstellungen anpassen.'
+        }
+    ];
+
+    let currentStep = 0;
+
+    function showTutorialStep(step) {
+        const stepData = tutorialSteps[step];
+        const element = document.querySelector(stepData.element);
+
+        if (element) {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tutorial-tooltip';
+            tooltip.innerText = stepData.message;
+            document.body.appendChild(tooltip);
+
+            const rect = element.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + window.scrollX}px`;
+            tooltip.style.top = `${rect.top + window.scrollY - tooltip.offsetHeight}px`;
+
+            element.addEventListener('click', () => {
+                tooltip.remove();
+                currentStep++;
+                if (currentStep < tutorialSteps.length) {
+                    showTutorialStep(currentStep);
+                }
+            });
+        }
+    }
+
+    // Start the tutorial
+    if (tutorialSteps.length > 0) {
+        showTutorialStep(currentStep);
+    }
 });

@@ -1,4 +1,6 @@
 <?php
+namespace Alenseo;
+
 /**
  * Meta-Box-Klasse für Alenseo SEO
  *

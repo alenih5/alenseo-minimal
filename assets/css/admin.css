@@ -383,3 +383,17 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* RTL Support */
+body.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .menu-item {
+    float: right;
+}
+
+.rtl .tooltip {
+    text-align: right;
+}

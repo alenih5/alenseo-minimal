@@ -3,7 +3,7 @@
  * Plugin Name: Alenseo SEO Minimal
  * Plugin URI: https://www.imponi.ch
  * Description: Ein schlankes SEO-Plugin mit Claude AI-Integration für WordPress
- * Version: 2.0.13
+ * Version: 2.0.14
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: Alen
@@ -39,6 +39,8 @@ define('ALENSEO_MINIMAL_DIR', plugin_dir_path(__FILE__));
 define('ALENSEO_MINIMAL_URL', plugin_dir_url(__FILE__));
 define('ALENSEO_MINIMAL_VERSION', '2.0.13');  // Version auf 2.0.13 aktualisiert
 define('ALENSEO_PLUGIN_FILE', __FILE__);
+// Updated plugin version to 2.0.17
+define('ALENSEO_VERSION', '2.0.17');
 
 // Sichere Datei-Einbindung
 function alenseo_require_file_v2($file) {
@@ -146,6 +148,32 @@ function alenseo_init() {
     }
 }
 add_action('plugins_loaded', 'alenseo_init');
+
+// Ensure Multisite compatibility
+if (is_multisite()) {
+    add_action('network_admin_menu', function () {
+        add_menu_page(
+            __('Alenseo Netzwerkeinstellungen', 'alenseo'),
+            __('Alenseo SEO', 'alenseo'),
+            'manage_network_options',
+            'alenseo-network-settings',
+            function () {
+                echo '<h1>' . __('Alenseo Netzwerkeinstellungen', 'alenseo') . '</h1>';
+                echo '<form method="post" action="">';
+                echo '<label for="global-seo-setting">' . __('Globale SEO-Einstellung:', 'alenseo') . '</label>';
+                echo '<input type="text" id="global-seo-setting" name="global_seo_setting" value="' . esc_attr(get_site_option('alenseo_global_seo_setting', '')) . '"><br><br>';
+                echo '<input type="submit" value="' . __('Speichern', 'alenseo') . '">';
+                echo '</form>';
+
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $global_seo_setting = sanitize_text_field($_POST['global_seo_setting']);
+                    update_site_option('alenseo_global_seo_setting', $global_seo_setting);
+                    echo '<p>' . __('Einstellungen gespeichert.', 'alenseo') . '</p>';
+                }
+            }
+        );
+    });
+}
 
 function alenseo_minimal_activate() {
     if (!get_option('alenseo_settings')) {
