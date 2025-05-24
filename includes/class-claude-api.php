@@ -3,13 +3,11 @@ namespace Alenseo;
 
 /**
  * Claude API-Klasse für Alenseo SEO
- * Diese Klasse ist verantwortlich für die Kommunikation mit der Claude AI API
- * 
- * @link        https://imponi.ch
- * @since      1.0.0
+ * Verantwortlich für die sichere Kommunikation mit der Claude AI API
  *
  * @package    Alenseo
  * @subpackage Alenseo/includes
+ * @since      2.1.0
  */
 
 // Direkter Zugriff verhindern
@@ -17,64 +15,82 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Die Claude API-Klasse
- */
 class Alenseo_Claude_API {
     
     /**
-     * Der API-Schlüssel
-     * 
-     * @var string
+     * API-Konfiguration
      */
     private $api_key;
-    
-    /**
-     * Das zu verwendende Modell
-     * 
-     * @var string
-     */
     private $model;
+    private $api_url = 'https://api.anthropic.com/v1/messages'; // Aktualisierte URL
+    private $api_version = '2023-06-01';
     
     /**
-     * Die API-Basis-URL
-     * 
-     * @var string
+     * Rate-Limiting
      */
-    private $api_url = 'https://api.anthropic.com/v1/complete';
-    private $api_headers = array(
-        'Content-Type' => 'application/json',
-        'anthropic-version' => '2023-06-01',
-        'x-api-key' => '' // API-Schlüssel wird dynamisch hinzugefügt
-    );
-    
-    /**
-     * Rate-Limit-Tracking
-     * 
-     * @var array
-     */
-    private $rate_limits = array(
+    private $rate_limits = [
         'requests' => 0,
         'tokens' => 0,
         'reset_time' => 0
-    );
+    ];
+    
+    /**
+     * Cache-Einstellungen
+     */
+    private $cache_duration = 3600; // 1 Stunde
+    private $cache_prefix = 'alenseo_claude_';
+    
+    /**
+     * Fehler-Codes
+     */
+    const ERROR_NO_API_KEY = 'no_api_key';
+    const ERROR_INVALID_KEY = 'invalid_api_key';
+    const ERROR_RATE_LIMIT = 'rate_limit_exceeded';
+    const ERROR_API_ERROR = 'api_error';
+    const ERROR_NETWORK = 'network_error';
     
     /**
      * Konstruktor
      */
     public function __construct() {
-        // Einstellungen laden
-        $settings = get_option('alenseo_settings', array());
+        $this->load_settings();
+        $this->load_rate_limits();
+    }
+    
+    /**
+     * Einstellungen laden
+     */
+    private function load_settings() {
+        $settings = get_option('alenseo_settings', []);
         
-        // API-Schlüssel und Modell aus den Einstellungen abrufen
-        $this->api_key = isset($settings['claude_api_key']) ? $settings['claude_api_key'] : '';
-        $this->model = isset($settings['claude_model']) ? $settings['claude_model'] : 'claude-3-haiku-20240307';
+        $this->api_key = isset($settings['claude_api_key']) 
+            ? trim($settings['claude_api_key']) 
+            : '';
+            
+        $this->model = isset($settings['claude_model']) 
+            ? $settings['claude_model'] 
+            : 'claude-3-haiku-20240307';
+            
+        // Cache-Dauer aus Einstellungen
+        if (isset($settings['advanced']['cache_duration'])) {
+            $this->cache_duration = absint($settings['advanced']['cache_duration']);
+        }
+    }
+    
+    /**
+     * Rate-Limits laden
+     */
+    private function load_rate_limits() {
+        $limits = get_transient('alenseo_claude_rate_limits');
         
-        // Rate-Limits aus der Datenbank laden oder initialisieren
-        $rate_limits = get_transient('alenseo_claude_rate_limits');
-        if ($rate_limits !== false) {
-            $this->rate_limits = $rate_limits;
+        if ($limits === false || !is_array($limits)) {
+            $this->reset_rate_limits();
         } else {
+            $this->rate_limits = $limits;
+        }
+        
+        // Automatisches Reset wenn Zeit abgelaufen
+        if (time() > $this->rate_limits['reset_time']) {
             $this->reset_rate_limits();
         }
     }
@@ -83,77 +99,332 @@ class Alenseo_Claude_API {
      * Rate-Limits zurücksetzen
      */
     private function reset_rate_limits() {
-        $this->rate_limits = array(
+        $this->rate_limits = [
             'requests' => 0,
             'tokens' => 0,
-            'reset_time' => time() + 60 * 60 // 1 Stunde von jetzt an
-        );
-        set_transient('alenseo_claude_rate_limits', $this->rate_limits, 60 * 60);
+            'reset_time' => time() + HOUR_IN_SECONDS
+        ];
+        
+        set_transient('alenseo_claude_rate_limits', $this->rate_limits, HOUR_IN_SECONDS);
     }
     
     /**
-     * Rate-Limits aktualisieren
-     * 
-     * @param int $tokens Verwendete Tokens
-     * @param string $request_type Art der API-Anfrage
-     * @param bool $success War die Anfrage erfolgreich?
-     * @param string $error_message Optionale Fehlermeldung
+     * API-Schlüssel validieren
      */
-    private function update_rate_limits($tokens, $request_type = 'completion', $success = true, $error_message = null) {
-        // Wenn die Reset-Zeit erreicht ist, Limits zurücksetzen
-        if (time() > $this->rate_limits['reset_time']) {
-            $this->reset_rate_limits();
+    public function validate_api_key($key = null) {
+        $key_to_validate = $key ?: $this->api_key;
+        
+        // Grundlegende Validierung
+        if (empty($key_to_validate)) {
+            return new \WP_Error(self::ERROR_NO_API_KEY, 'Kein API-Schlüssel vorhanden.');
         }
         
-        $this->rate_limits['requests']++;
-        $this->rate_limits['tokens'] += $tokens;
+        // Format-Validierung (Claude API-Schlüssel beginnen mit "sk-ant-")
+        if (!preg_match('/^sk-ant-[a-zA-Z0-9\-_]+$/', $key_to_validate)) {
+            return new \WP_Error(self::ERROR_INVALID_KEY, 'Ungültiges API-Schlüssel-Format.');
+        }
         
-        set_transient('alenseo_claude_rate_limits', $this->rate_limits, 60 * 60);
+        // Längenvalidierung
+        if (strlen($key_to_validate) < 20 || strlen($key_to_validate) > 200) {
+            return new \WP_Error(self::ERROR_INVALID_KEY, 'API-Schlüssel hat ungültige Länge.');
+        }
         
-        // API-Nutzung in der Datenbank protokollieren, wenn die Datenbank-Klasse verfügbar ist
-        global $alenseo_database;
-        if (isset($alenseo_database) && method_exists($alenseo_database, 'log_api_usage')) {
-            $alenseo_database->log_api_usage(
-                $this->api_key,
-                $request_type,
-                $tokens,
-                $success,
-                $error_message
+        return true;
+    }
+    
+    /**
+     * API-Schlüssel testen
+     */
+    public function test_api_key() {
+        // Validierung
+        $validation = $this->validate_api_key();
+        if (is_wp_error($validation)) {
+            return [
+                'success' => false,
+                'message' => $validation->get_error_message()
+            ];
+        }
+        
+        // Test-Anfrage mit minimalem Prompt
+        $result = $this->generate_text('Antworte nur mit: OK', [
+            'max_tokens' => 10,
+            'temperature' => 0
+        ]);
+        
+        if (is_wp_error($result)) {
+            return [
+                'success' => false,
+                'message' => $result->get_error_message(),
+                'error_code' => $result->get_error_code()
+            ];
+        }
+        
+        return [
+            'success' => true,
+            'message' => 'API-Verbindung erfolgreich!',
+            'model' => $this->model,
+            'rate_limits' => $this->get_rate_limit_info()
+        ];
+    }
+    
+    /**
+     * Text generieren
+     */
+    public function generate_text($prompt, $options = []) {
+        // API-Schlüssel prüfen
+        $validation = $this->validate_api_key();
+        if (is_wp_error($validation)) {
+            return $validation;
+        }
+        
+        // Rate-Limits prüfen
+        $rate_check = $this->check_rate_limits();
+        if (is_wp_error($rate_check)) {
+            return $rate_check;
+        }
+        
+        // Optionen vorbereiten
+        $defaults = [
+            'max_tokens' => 1024,
+            'temperature' => 0.7,
+            'system_prompt' => 'Du bist ein SEO-Experte, der bei der Optimierung von Website-Inhalten hilft.',
+            'use_cache' => true
+        ];
+        
+        $options = wp_parse_args($options, $defaults);
+        
+        // Cache prüfen
+        if ($options['use_cache']) {
+            $cache_key = $this->get_cache_key($prompt, $options);
+            $cached = get_transient($cache_key);
+            
+            if ($cached !== false) {
+                $this->update_cache_stats('hit');
+                return $cached;
+            }
+            
+            $this->update_cache_stats('miss');
+        }
+        
+        // API-Anfrage vorbereiten
+        $request_body = [
+            'model' => $this->model,
+            'max_tokens' => absint($options['max_tokens']),
+            'temperature' => floatval($options['temperature']),
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
+            ]
+        ];
+        
+        // System-Prompt hinzufügen wenn vorhanden
+        if (!empty($options['system_prompt'])) {
+            $request_body['system'] = $options['system_prompt'];
+        }
+        
+        // API-Anfrage durchführen
+        $response = $this->make_api_request($request_body);
+        
+        if (is_wp_error($response)) {
+            return $response;
+        }
+        
+        // Antwort extrahieren
+        $text = $this->extract_text_from_response($response);
+        
+        if (is_wp_error($text)) {
+            return $text;
+        }
+        
+        // Tokens zählen und Rate-Limits aktualisieren
+        $tokens_used = $this->count_tokens_from_response($response);
+        $this->update_rate_limits($tokens_used);
+        
+        // Ergebnis cachen
+        if ($options['use_cache']) {
+            set_transient($cache_key, $text, $this->cache_duration);
+        }
+        
+        // Nutzungsstatistiken aktualisieren
+        $this->update_usage_stats($tokens_used);
+        
+        return $text;
+    }
+    
+    /**
+     * API-Anfrage durchführen
+     */
+    private function make_api_request($body) {
+        $headers = [
+            'Content-Type' => 'application/json',
+            'x-api-key' => $this->api_key,
+            'anthropic-version' => $this->api_version
+        ];
+        
+        $args = [
+                'timeout' => 60,
+            'headers' => $headers,
+            'body' => wp_json_encode($body),
+            'sslverify' => true
+        ];
+        
+        // Request durchführen
+        $response = wp_remote_post($this->api_url, $args);
+        
+        // Netzwerkfehler prüfen
+        if (is_wp_error($response)) {
+            $this->log_error('Network error: ' . $response->get_error_message());
+            return new \WP_Error(
+                self::ERROR_NETWORK,
+                'Netzwerkfehler: ' . $response->get_error_message()
             );
         }
+        
+        // HTTP-Status prüfen
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+        
+        if ($status_code !== 200) {
+            return $this->handle_api_error($status_code, $body);
+        }
+        
+        // JSON dekodieren
+        $decoded = json_decode($body, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return new \WP_Error(
+                self::ERROR_API_ERROR,
+                'Ungültige API-Antwort (JSON-Fehler)'
+            );
+        }
+        
+        return $decoded;
     }
     
     /**
-     * Prüfen, ob das Rate-Limit überschritten wurde
-     * 
-     * @return bool|WP_Error true wenn OK, WP_Error wenn Limit erreicht
+     * API-Fehler behandeln
      */
-    private function check_rate_limits() {
-        // Wenn die Reset-Zeit erreicht ist, Limits zurücksetzen
-        if (time() > $this->rate_limits['reset_time']) {
-            $this->reset_rate_limits();
-            return true;
+    private function handle_api_error($status_code, $body) {
+        $decoded = json_decode($body, true);
+        $error_message = 'Unbekannter API-Fehler';
+        
+        if (isset($decoded['error']['message'])) {
+            $error_message = $decoded['error']['message'];
         }
         
-        // Beispiel-Limits (anpassen nach tatsächlichen API-Limits)
-        $max_requests = 50; // Max Anfragen pro Stunde
-        $max_tokens = 100000; // Max Tokens pro Stunde
+        // Spezifische Fehlerbehandlung nach Status-Code
+        switch ($status_code) {
+            case 401:
+                return new \WP_Error(
+                    self::ERROR_INVALID_KEY,
+                    'Ungültiger API-Schlüssel'
+                );
+                
+            case 429:
+                return new \WP_Error(
+                    self::ERROR_RATE_LIMIT,
+                    'Rate-Limit überschritten. Bitte später erneut versuchen.'
+                );
+                
+            case 400:
+                return new \WP_Error(
+                    self::ERROR_API_ERROR,
+                    'Ungültige Anfrage: ' . $error_message
+                );
+                
+            default:
+                return new \WP_Error(
+                    self::ERROR_API_ERROR,
+                    sprintf('API-Fehler (%d): %s', $status_code, $error_message)
+                );
+        }
+    }
+    
+    /**
+     * Text aus API-Antwort extrahieren
+     */
+    private function extract_text_from_response($response) {
+        if (!isset($response['content']) || !is_array($response['content'])) {
+            return new \WP_Error(
+                self::ERROR_API_ERROR,
+                'Unerwartetes Antwortformat'
+            );
+        }
         
+        $text_parts = [];
+        
+        foreach ($response['content'] as $content) {
+            if (isset($content['type']) && $content['type'] === 'text' && isset($content['text'])) {
+                $text_parts[] = $content['text'];
+            }
+        }
+        
+        if (empty($text_parts)) {
+            return new \WP_Error(
+                self::ERROR_API_ERROR,
+                'Keine Textantwort erhalten'
+            );
+        }
+        
+        return implode("\n", $text_parts);
+    }
+    
+    /**
+     * Tokens aus Antwort zählen
+     */
+    private function count_tokens_from_response($response) {
+        if (isset($response['usage'])) {
+            $input_tokens = isset($response['usage']['input_tokens']) 
+                ? absint($response['usage']['input_tokens']) 
+                : 0;
+                
+            $output_tokens = isset($response['usage']['output_tokens']) 
+                ? absint($response['usage']['output_tokens']) 
+                : 0;
+                
+            return $input_tokens + $output_tokens;
+        }
+        
+        // Fallback: Schätzung basierend auf Textlänge
+        return 100; // Konservative Schätzung
+    }
+    
+    /**
+     * Rate-Limits prüfen
+     */
+    private function check_rate_limits() {
+        // Limits aus Einstellungen oder Defaults
+        $settings = get_option('alenseo_settings', []);
+        $max_requests = isset($settings['rate_limits']['max_requests']) 
+            ? absint($settings['rate_limits']['max_requests']) 
+            : 50;
+        $max_tokens = isset($settings['rate_limits']['max_tokens']) 
+            ? absint($settings['rate_limits']['max_tokens']) 
+            : 100000;
+        
+        // Anfragen-Limit prüfen
         if ($this->rate_limits['requests'] >= $max_requests) {
-            return new WP_Error(
-                'rate_limit_exceeded',
+            return new \WP_Error(
+                self::ERROR_RATE_LIMIT,
                 sprintf(
-                    __('API-Anfragenlimit erreicht. Bitte warte bis %s.', 'alenseo'),
+                    'Anfragen-Limit erreicht (%d/%d). Reset um %s.',
+                    $this->rate_limits['requests'],
+                    $max_requests,
                     date('H:i', $this->rate_limits['reset_time'])
                 )
             );
         }
         
+        // Token-Limit prüfen
         if ($this->rate_limits['tokens'] >= $max_tokens) {
-            return new WP_Error(
-                'token_limit_exceeded',
+            return new \WP_Error(
+                self::ERROR_RATE_LIMIT,
                 sprintf(
-                    __('API-Tokenlimit erreicht. Bitte warte bis %s.', 'alenseo'),
+                    'Token-Limit erreicht (%d/%d). Reset um %s.',
+                    $this->rate_limits['tokens'],
+                    $max_tokens,
                     date('H:i', $this->rate_limits['reset_time'])
                 )
             );
@@ -163,252 +434,215 @@ class Alenseo_Claude_API {
     }
     
     /**
-     * API-Schlüssel testen
-     * 
-     * @return array Erfolgs-/Fehlerinformationen
+     * Rate-Limits aktualisieren
      */
-    public function test_key() {
-        if (empty($this->api_key)) {
-            return array(
-                'success' => false,
-                'message' => __('Kein API-Schlüssel konfiguriert.', 'alenseo')
-            );
-        }
+    private function update_rate_limits($tokens_used) {
+        $this->rate_limits['requests']++;
+        $this->rate_limits['tokens'] += $tokens_used;
         
-        // Überprüfen ob API-Schlüssel zu lang ist
-        if (strlen($this->api_key) > 100) {
-            return array(
-                'success' => false,
-                'message' => __('API-Schlüssel ist zu lang. Bitte überprüfen Sie den eingegebenen Schlüssel.', 'alenseo')
-            );
-        }
+        set_transient('alenseo_claude_rate_limits', $this->rate_limits, HOUR_IN_SECONDS);
         
-        // Minimalen Prompt für den Test erstellen
-        $result = $this->generate_text("Bitte antworte mit dem Wort: Test");
-        
-        if (is_wp_error($result)) {
-            return array(
-                'success' => false,
-                'message' => $result->get_error_message()
-            );
-        }
-        
-        return array(
-            'success' => true,
-            'message' => __('API-Verbindung erfolgreich getestet!', 'alenseo'),
-            'model' => $this->model
-        );
+        // Optional: In Datenbank loggen
+        $this->log_api_usage($tokens_used);
     }
     
     /**
-     * Prüft, ob der API-Schlüssel konfiguriert ist
-     * 
-     * @return bool True wenn API-Schlüssel konfiguriert ist, sonst False
+     * Cache-Key generieren
      */
-    public function is_api_configured() {
-        return !empty($this->api_key);
-    }
-    
-    /**
-     * API-Schlüssel testen (Alias für test_key für bessere Lesbarkeit)
-     * 
-     * @return bool|WP_Error true bei Erfolg, WP_Error bei Fehler
-     */
-    public function test_api_key() {
-        return $this->test_key();
-    }
-    
-    /**
-     * Verfügbare Modelle abrufen
-     * 
-     * @return array Liste der verfügbaren Claude-Modelle
-     */
-    public function get_available_models() {
-        return array(
-            'claude-3-opus-20240229' => 'Claude 3 Opus',
-            'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
-            'claude-3-haiku-20240307' => 'Claude 3 Haiku',
-            'claude-2.0' => 'Claude 2',
-            'claude-instant-1.2' => 'Claude Instant'
-        );
-    }
-    
-    /**
-     * Text mit Claude generieren
-     * 
-     * @param string $prompt Der Prompt für Claude
-     * @param array $options Zusätzliche Optionen
-     * @return string|WP_Error Die generierte Antwort oder Fehler
-     */
-    public function generate_text($prompt, $options = array()) {
-        // Prüfen, ob API-Schlüssel vorhanden
-        if (empty($this->api_key)) {
-            return new WP_Error('empty_key', __('Kein API-Schlüssel konfiguriert.', 'alenseo'));
-        }
-        
-        // Rate-Limits prüfen
-        $rate_check = $this->check_rate_limits();
-        if (is_wp_error($rate_check)) {
-            return $rate_check;
-        }
-        
-        // Standard-Optionen festlegen
-        $defaults = array(
-            'max_tokens' => 1024,
-            'temperature' => 0.7,
-            'system_prompt' => 'Du bist ein SEO-Experte und hilfst, Website-Inhalte zu optimieren.'
-        );
-        
-        $options = wp_parse_args($options, $defaults);
-        
-        // Request-Daten vorbereiten
-        $request_data = array(
+    private function get_cache_key($prompt, $options) {
+        $key_data = [
             'model' => $this->model,
+            'prompt' => $prompt,
             'max_tokens' => $options['max_tokens'],
             'temperature' => $options['temperature'],
-            'messages' => array(
-                array(
-                    'role' => 'system',
-                    'content' => $options['system_prompt']
-                ),
-                array(
-                    'role' => 'user',
-                    'content' => $prompt
-                )
-            )
-        );
+            'system_prompt' => $options['system_prompt']
+        ];
         
-        // Caching-Key erstellen
-        $cache_key = 'alenseo_claude_' . md5($this->model . json_encode($request_data));
-        $cached_response = get_transient($cache_key);
-        
-        // Gecachte Antwort verwenden, falls vorhanden
-        if ($cached_response !== false) {
-            // Cache-Statistiken aktualisieren
-            $cache_stats = get_option('alenseo_cache_stats', array('hits' => 0, 'misses' => 0));
-            $cache_stats['hits']++;
-            update_option('alenseo_cache_stats', $cache_stats);
-            
-            return $cached_response;
-        }
-        
-        // Cache-Miss zählen
-        $cache_stats = get_option('alenseo_cache_stats', array('hits' => 0, 'misses' => 0));
-        $cache_stats['misses']++;
-        update_option('alenseo_cache_stats', $cache_stats);
-        
-        // API-Nutzung für heute zählen
-        $today = date('Y-m-d');
-        $api_usage = get_option('alenseo_api_usage', array());
-        $api_usage[$today] = isset($api_usage[$today]) ? $api_usage[$today] + 1 : 1;
-        update_option('alenseo_api_usage', $api_usage);
-        
-        // Request an API senden
-        $this->api_headers['x-api-key'] = $this->api_key;
-        $response = wp_remote_post(
-            $this->api_url,
-            array(
-                'timeout' => 60,
-                'headers' => $this->api_headers,
-                'body' => json_encode($request_data)
-            )
-        );
-        
-        // Fehlerbehandlung
-        $error = $this->handle_api_error($response);
-        if (is_wp_error($error)) {
-            return $error;
-        }
-        
-        // Erfolgreiche Antwort verarbeiten
-        $body = $this->parse_response($response);
-        if (is_wp_error($body)) {
-            return $body;
-        }
-        
-        if (!isset($body['content'][0]['text'])) {
-            error_log('Alenseo Claude API: Unerwartetes Antwortformat');
-            return new WP_Error('unexpected_response', __('Unerwartetes Antwortformat von der API.', 'alenseo'));
-        }
-        
-        $result = $body['content'][0]['text'];
-        
-        // Tatsächliche Token-Anzahl aus der API-Antwort auslesen
-        $actual_input_tokens = isset($body['usage']['input_tokens']) ? intval($body['usage']['input_tokens']) : 0;
-        $actual_output_tokens = isset($body['usage']['output_tokens']) ? intval($body['usage']['output_tokens']) : 0;
-        $total_tokens = $actual_input_tokens + $actual_output_tokens;
-        
-        // Wenn keine Token-Informationen verfügbar sind, schätzen wir sie
-        if ($total_tokens === 0) {
-            $total_tokens = ceil(mb_strlen($prompt) / 4) + ceil(mb_strlen($result) / 4);
-        }
-        
-        // Rate-Limits aktualisieren mit tatsächlicher Token-Anzahl
-        $this->update_rate_limits($total_tokens, 'text_completion', true);
-        
-        // Tokens für diesen Monat zählen
-        $current_month = date('Y-m');
-        $token_usage = get_option('alenseo_token_usage', array());
-        $token_usage[$current_month] = isset($token_usage[$current_month]) ? 
-            $token_usage[$current_month] + $total_tokens : 
-            $total_tokens;
-        update_option('alenseo_token_usage', $token_usage);
-        
-        // Ergebnis cachen (1 Stunde)
-        set_transient($cache_key, $result, 60 * 60);
-        
-        return $result;
+        return $this->cache_prefix . md5(serialize($key_data));
     }
     
     /**
-     * Erweiterte Fehlerbehandlung für API-Anfragen
-     * 
-     * @param WP_Error|array $response Die API-Antwort
-     * @return WP_Error|false WP_Error bei Fehler, false bei Erfolg
+     * Cache-Statistiken aktualisieren
      */
-    private function handle_api_error($response) {
-        if (is_wp_error($response)) {
-            return $response;
-        }
-
-        $code = wp_remote_retrieve_response_code($response);
-        if ($code !== 200) {
-            $message = wp_remote_retrieve_response_message($response);
-            return new WP_Error('api_error', $message);
-        }
-
-        return false;
+    private function update_cache_stats($type) {
+        $stats = get_option('alenseo_cache_stats', ['hits' => 0, 'misses' => 0]);
+        $stats[$type . 's']++;
+        update_option('alenseo_cache_stats', $stats);
     }
-
+    
     /**
-     * JSON-Antworten parsen
+     * Nutzungsstatistiken aktualisieren
      */
-    private function parse_response($response) {
-        $body = json_decode(wp_remote_retrieve_body($response), true);
-
-        if (isset($body['error'])) {
-            return new WP_Error('api_error', $body['error']['message']);
+    private function update_usage_stats($tokens) {
+        // Tägliche Statistik
+        $today = date('Y-m-d');
+        $daily_usage = get_option('alenseo_api_usage', []);
+        
+        if (!isset($daily_usage[$today])) {
+            $daily_usage[$today] = ['requests' => 0, 'tokens' => 0];
         }
-
-        return $body;
+        
+        $daily_usage[$today]['requests']++;
+        $daily_usage[$today]['tokens'] += $tokens;
+        
+        // Nur die letzten 30 Tage behalten
+        $daily_usage = array_slice($daily_usage, -30, 30, true);
+        
+        update_option('alenseo_api_usage', $daily_usage);
+        
+        // Monatliche Token-Statistik
+        $month = date('Y-m');
+        $monthly_tokens = get_option('alenseo_monthly_tokens', []);
+        $monthly_tokens[$month] = isset($monthly_tokens[$month]) 
+            ? $monthly_tokens[$month] + $tokens 
+            : $tokens;
+            
+        update_option('alenseo_monthly_tokens', $monthly_tokens);
+    }
+    
+    /**
+     * API-Nutzung loggen
+     */
+    private function log_api_usage($tokens) {
+        global $alenseo_database;
+        
+        if ($alenseo_database && method_exists($alenseo_database, 'log_api_usage')) {
+            $alenseo_database->log_api_usage(
+                substr($this->api_key, -6), // Nur letzte 6 Zeichen für Datenschutz
+                'text_generation',
+                $tokens,
+                true,
+                null
+            );
+        }
+    }
+    
+    /**
+     * Fehler loggen
+     */
+    private function log_error($message) {
+        if (WP_DEBUG) {
+            error_log('Alenseo Claude API: ' . $message);
+        }
+    }
+    
+    /**
+     * Rate-Limit-Informationen abrufen
+     */
+    public function get_rate_limit_info() {
+        $settings = get_option('alenseo_settings', []);
+        
+        return [
+            'requests_used' => $this->rate_limits['requests'],
+            'requests_limit' => isset($settings['rate_limits']['max_requests']) 
+                ? absint($settings['rate_limits']['max_requests']) 
+                : 50,
+            'tokens_used' => $this->rate_limits['tokens'],
+            'tokens_limit' => isset($settings['rate_limits']['max_tokens']) 
+                ? absint($settings['rate_limits']['max_tokens']) 
+                : 100000,
+            'reset_time' => $this->rate_limits['reset_time'],
+            'reset_in' => max(0, $this->rate_limits['reset_time'] - time())
+        ];
+    }
+    
+    /**
+     * Verfügbare Modelle mit Details
+     */
+    public function get_available_models() {
+        return [
+            'claude-3-opus-20240229' => [
+                'name' => 'Claude 3 Opus',
+                'description' => 'Höchste Leistung für komplexe Aufgaben',
+                'max_tokens' => 4096,
+                'cost_per_1k_tokens' => 0.015
+            ],
+            'claude-3-sonnet-20240229' => [
+                'name' => 'Claude 3 Sonnet',
+                'description' => 'Ausgewogene Leistung und Geschwindigkeit',
+                'max_tokens' => 4096,
+                'cost_per_1k_tokens' => 0.003
+            ],
+            'claude-3-haiku-20240307' => [
+                'name' => 'Claude 3 Haiku',
+                'description' => 'Schnell und kosteneffizient',
+                'max_tokens' => 4096,
+                'cost_per_1k_tokens' => 0.00025
+            ]
+        ];
+    }
+    
+    /**
+     * Cache löschen
+     */
+    public function clear_cache() {
+        global $wpdb;
+        
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$wpdb->options} 
+                WHERE option_name LIKE %s",
+                $wpdb->esc_like($this->cache_prefix) . '%'
+            )
+        );
+        
+        return true;
     }
 
     /**
      * AJAX-Handler für Textgenerierung
      */
     public static function ajax_generate_text() {
-        check_ajax_referer('alenseo_settings_nonce', 'security');
-
-        $prompt = isset($_POST['prompt']) ? sanitize_text_field($_POST['prompt']) : '';
-        $options = isset($_POST['options']) ? json_decode(stripslashes($_POST['options']), true) : array();
-
-        $instance = new self();
-        $result = $instance->generate_text($prompt, $options);
+        // Sicherheitsprüfung
+        if (!check_ajax_referer('alenseo_ajax_nonce', 'security', false)) {
+            wp_send_json_error(['message' => 'Sicherheitsprüfung fehlgeschlagen']);
+            return;
+        }
+        
+        // Berechtigungsprüfung
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(['message' => 'Keine Berechtigung']);
+            return;
+        }
+        
+        // Eingabedaten validieren
+        $prompt = isset($_POST['prompt']) ? sanitize_textarea_field($_POST['prompt']) : '';
+        
+        if (empty($prompt)) {
+            wp_send_json_error(['message' => 'Kein Prompt angegeben']);
+            return;
+        }
+        
+        // Optionen verarbeiten
+        $options = [];
+        if (isset($_POST['options']) && is_string($_POST['options'])) {
+            $decoded = json_decode(stripslashes($_POST['options']), true);
+            if (is_array($decoded)) {
+                $options = $decoded;
+            }
+        }
+        
+        // API-Instanz erstellen und Text generieren
+        try {
+            $api = new self();
+            $result = $api->generate_text($prompt, $options);
 
         if (is_wp_error($result)) {
-            wp_send_json_error(array('message' => $result->get_error_message()));
+                wp_send_json_error([
+                    'message' => $result->get_error_message(),
+                    'code' => $result->get_error_code()
+                ]);
         } else {
-            wp_send_json_success(array('text' => $result));
+                wp_send_json_success([
+                    'text' => $result,
+                    'rate_limits' => $api->get_rate_limit_info()
+                ]);
+            }
+        } catch (\Exception $e) {
+            wp_send_json_error([
+                'message' => 'Fehler bei der Textgenerierung',
+                'debug' => WP_DEBUG ? $e->getMessage() : null
+            ]);
         }
     }
 
@@ -416,29 +650,135 @@ class Alenseo_Claude_API {
      * AJAX-Handler registrieren
      */
     public static function register_ajax_handlers() {
-        add_action('wp_ajax_alenseo_generate_text', array(__CLASS__, 'ajax_generate_text'));
+        add_action('wp_ajax_alenseo_generate_text', [__CLASS__, 'ajax_generate_text']);
+        add_action('wp_ajax_alenseo_test_api_key', [__CLASS__, 'ajax_test_api_key']);
+        add_action('wp_ajax_alenseo_clear_api_cache', [__CLASS__, 'ajax_clear_cache']);
+    }
+    
+    /**
+     * AJAX-Handler für API-Key-Test
+     */
+    public static function ajax_test_api_key() {
+        check_ajax_referer('alenseo_ajax_nonce', 'security');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Keine Berechtigung']);
+            return;
+        }
+        
+        $api = new self();
+        $result = $api->test_api_key();
+        
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+    
+    /**
+     * AJAX-Handler für Cache-Löschung
+     */
+    public static function ajax_clear_cache() {
+        check_ajax_referer('alenseo_ajax_nonce', 'security');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Keine Berechtigung']);
+            return;
+        }
+        
+        $api = new self();
+        $api->clear_cache();
+        
+        wp_send_json_success(['message' => 'Cache erfolgreich gelöscht']);
+    }
+    
+    /**
+     * Prüft, ob die API korrekt konfiguriert ist
+     * 
+     * @return bool True wenn die API konfiguriert ist, sonst false
+     */
+    public function is_api_configured() {
+        // API-Schlüssel muss vorhanden und gültig sein
+        if (empty($this->api_key)) {
+            return false;
+        }
+        
+        // Grundlegende Validierung des API-Schlüssels
+        if (!preg_match('/^sk-ant-[a-zA-Z0-9\-_]+$/', $this->api_key)) {
+            return false;
+        }
+        
+        // Modell muss ausgewählt sein
+        if (empty($this->model)) {
+            return false;
+        }
+        
+        return true;
     }
 
-    public function get_cached_response($key, $callback, $expiration = 3600) {
-        $cached = get_transient($key);
-        if ($cached !== false) {
-            return $cached;
+    /**
+     * Gibt den aktuellen API-Status zurück
+     * 
+     * @return array Status-Informationen
+     */
+    public function get_api_status() {
+        $status = [
+            'configured' => false,
+            'valid' => false,
+            'message' => '',
+            'model' => $this->model,
+            'last_check' => get_option('alenseo_api_last_check', 0)
+        ];
+
+        // Prüfen ob API konfiguriert ist
+        if (!$this->is_api_configured()) {
+            $status['message'] = __('API nicht konfiguriert', 'alenseo');
+            return $status;
         }
 
-        $response = $callback();
-        if ($response) {
-            set_transient($key, $response, $expiration);
+        $status['configured'] = true;
+
+        // Prüfen ob letzter API-Test erfolgreich war
+        $last_check = get_option('alenseo_api_last_check', 0);
+        $last_status = get_option('alenseo_api_last_status', false);
+
+        if ($last_check && $last_status && (time() - $last_check) < 3600) {
+            $status['valid'] = true;
+            $status['message'] = __('API-Verbindung aktiv', 'alenseo');
+            return $status;
         }
 
-        return $response;
+        // API-Test durchführen
+        $test_result = $this->test_api_key();
+        
+        if ($test_result['success']) {
+            $status['valid'] = true;
+            $status['message'] = __('API-Verbindung erfolgreich', 'alenseo');
+            update_option('alenseo_api_last_check', time());
+            update_option('alenseo_api_last_status', true);
+        } else {
+            $status['message'] = $test_result['message'];
+            update_option('alenseo_api_last_check', time());
+            update_option('alenseo_api_last_status', false);
+        }
+
+        return $status;
     }
 
-    public function fetch_keywords($prompt) {
-        $cache_key = 'claude_keywords_' . md5($prompt);
-        return $this->get_cached_response($cache_key, function() use ($prompt) {
-            // ...existing API request logic...
-            $response = $this->send_request($prompt);
-            return $response;
-        });
+    /**
+     * API-Status für JavaScript bereitstellen
+     */
+    public function get_api_status_for_js() {
+        $status = $this->get_api_status();
+        
+        return [
+            'configured' => $status['configured'],
+            'valid' => $status['valid'],
+            'message' => $status['message'],
+            'model' => $status['model'],
+            'last_check' => $status['last_check'],
+            'nonce' => wp_create_nonce('alenseo_api_status')
+        ];
     }
 }

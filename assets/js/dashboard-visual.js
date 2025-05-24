@@ -6,6 +6,238 @@
 jQuery(document).ready(function($) {
     'use strict';
     
+    // Initialisierung aller Komponenten
+    initAllComponents();
+    
+    // Event-Handler für Filter und Sortierung
+    initFiltersAndSorting();
+    
+    // Echtzeit-Updates einrichten
+    setupRealTimeUpdates();
+    
+    function initAllComponents() {
+        // Bestehende Initialisierungen
+        initCircleProgress();
+        initProgressBars();
+        
+        // Neue erweiterte Visualisierungen
+        initAdvancedCharts();
+        initHeatmap();
+        initKeywordCloud();
+        
+        // Interaktive Elemente
+        initInteractiveElements();
+    }
+    
+    function initAdvancedCharts() {
+        if (typeof Chart !== 'undefined') {
+            initCharts();
+            initPerformanceChart();
+            initKeywordDistributionChart();
+        } else {
+            loadChartJs().then(() => {
+                initCharts();
+                initPerformanceChart();
+                initKeywordDistributionChart();
+            });
+        }
+    }
+    
+    function initPerformanceChart() {
+        if ($('#performanceChart').length) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: performanceData.labels,
+                    datasets: [{
+                        label: 'Ladezeit',
+                        data: performanceData.loadTimes,
+                        borderColor: '#3498db',
+                        tension: 0.4
+                    }, {
+                        label: 'SEO-Score',
+                        data: performanceData.seoScores,
+                        borderColor: '#2ecc71',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    function initKeywordDistributionChart() {
+        if ($('#keywordDistributionChart').length) {
+            const ctx = document.getElementById('keywordDistributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: keywordData.labels,
+                    datasets: [{
+                        label: 'Keyword-Verteilung',
+                        data: keywordData.values,
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    function initHeatmap() {
+        if ($('#contentHeatmap').length) {
+            const heatmapData = {
+                max: 100,
+                data: heatmapData.points
+            };
+            
+            const heatmap = h337.create({
+                container: document.getElementById('contentHeatmap'),
+                radius: 50,
+                maxOpacity: 0.6
+            });
+            
+            heatmap.setData(heatmapData);
+        }
+    }
+    
+    function initKeywordCloud() {
+        if ($('#keywordCloud').length) {
+            WordCloud(document.getElementById('keywordCloud'), {
+                list: keywordCloudData,
+                gridSize: 16,
+                weightFactor: 10,
+                fontFamily: 'Arial',
+                color: '#3498db',
+                hover: window.drawBox,
+                click: function(item) {
+                    showKeywordDetails(item[0]);
+                }
+            });
+        }
+    }
+    
+    function initFiltersAndSorting() {
+        // Filter-Event-Handler
+        $('.filter-select').on('change', function() {
+            applyFilters();
+        });
+        
+        // Sortierung-Event-Handler
+        $('.sort-header').on('click', function() {
+            const column = $(this).data('column');
+            const direction = $(this).data('direction') === 'asc' ? 'desc' : 'asc';
+            sortTable(column, direction);
+        });
+    }
+    
+    function applyFilters() {
+        const filters = {
+            status: $('#status-filter').val(),
+            score: $('#score-filter').val(),
+            date: $('#date-filter').val()
+        };
+        
+        $.ajax({
+            url: alenseoData.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_filter_content',
+                filters: filters,
+                nonce: alenseoData.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    updateContentDisplay(response.data);
+                }
+            }
+        });
+    }
+    
+    function sortTable(column, direction) {
+        const $table = $('.content-table');
+        const $rows = $table.find('tbody tr').toArray();
+        
+        $rows.sort((a, b) => {
+            const aVal = $(a).find(`[data-column="${column}"]`).text();
+            const bVal = $(b).find(`[data-column="${column}"]`).text();
+            
+            if (direction === 'asc') {
+                return aVal.localeCompare(bVal);
+            } else {
+                return bVal.localeCompare(aVal);
+            }
+        });
+        
+        $table.find('tbody').append($rows);
+    }
+    
+    function setupRealTimeUpdates() {
+        // WebSocket-Verbindung für Echtzeit-Updates
+        const ws = new WebSocket(alenseoData.wsUrl);
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            handleRealTimeUpdate(data);
+        };
+        
+        // Fallback: Polling für Updates
+        setInterval(checkForUpdates, 30000);
+    }
+    
+    function handleRealTimeUpdate(data) {
+        switch(data.type) {
+            case 'score_update':
+                updateScoreDisplay(data.postId, data.score);
+                break;
+            case 'keyword_update':
+                updateKeywordDisplay(data.postId, data.keywords);
+                break;
+            case 'status_update':
+                updateStatusDisplay(data.postId, data.status);
+                break;
+        }
+    }
+    
+    function checkForUpdates() {
+        $.ajax({
+            url: alenseoData.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_check_updates',
+                nonce: alenseoData.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    handleRealTimeUpdate(response.data);
+                }
+            }
+        });
+    }
+    
     // Kreisdiagramm für die Gesamtpunktzahl initialisieren
     initCircleProgress();
     
@@ -403,4 +635,145 @@ jQuery(document).ready(function($) {
             }
         });
     }
+
+    // API-Status aktualisieren
+    function updateApiStatus() {
+        $.ajax({
+            url: alenseoData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_get_api_status',
+                security: alenseoData.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    const status = response.data;
+                    updateApiStatusUI(status);
+                }
+            }
+        });
+    }
+
+    // API-Status UI aktualisieren
+    function updateApiStatusUI(status) {
+        const $statusIndicator = $('#alenseo-api-status');
+        const $statusMessage = $('#alenseo-api-message');
+        
+        if (!$statusIndicator.length) {
+            return;
+        }
+
+        // Status-Indikator aktualisieren
+        $statusIndicator.removeClass('alenseo-status-valid alenseo-status-invalid alenseo-status-unknown')
+            .addClass(status.valid ? 'alenseo-status-valid' : 
+                     status.configured ? 'alenseo-status-invalid' : 'alenseo-status-unknown');
+
+        // Status-Nachricht aktualisieren
+        if ($statusMessage.length) {
+            $statusMessage.text(status.message);
+        }
+
+        // Analyse-Button Status aktualisieren
+        const $analyzeButtons = $('.alenseo-analyze-button');
+        $analyzeButtons.prop('disabled', !status.valid)
+            .attr('title', status.valid ? '' : status.message);
+    }
+
+    // Analyse-Button Click-Handler
+    $('.alenseo-analyze-button').on('click', function(e) {
+        e.preventDefault();
+        
+        const $button = $(this);
+        const postId = $button.data('post-id');
+        
+        if ($button.prop('disabled')) {
+            return;
+        }
+
+        // Button deaktivieren und Loading-Status anzeigen
+        $button.prop('disabled', true)
+            .addClass('alenseo-loading')
+            .html('<span class="spinner is-active"></span> ' + alenseoData.messages.analyzing);
+
+        // Analyse starten
+        $.ajax({
+            url: alenseoData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_analyze_post',
+                post_id: postId,
+                security: alenseoData.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    showSuccess(response.data.message);
+                    // UI aktualisieren
+                    updatePostUI(postId, response.data);
+                } else {
+                    showError(response.data.message);
+                }
+            },
+            error: function() {
+                showError(alenseoData.messages.error);
+            },
+            complete: function() {
+                // Button-Status zurücksetzen
+                $button.prop('disabled', false)
+                    .removeClass('alenseo-loading')
+                    .text(alenseoData.messages.analyze);
+            }
+        });
+    });
+
+    // Erfolgsmeldung anzeigen
+    function showSuccess(message) {
+        const $notice = $('<div class="notice notice-success is-dismissible"><p>' + message + '</p></div>');
+        $('.alenseo-notices').append($notice);
+        
+        // Automatisch ausblenden nach 5 Sekunden
+        setTimeout(function() {
+            $notice.fadeOut(function() {
+                $(this).remove();
+            });
+        }, 5000);
+    }
+
+    // Fehlermeldung anzeigen
+    function showError(message) {
+        const $notice = $('<div class="notice notice-error is-dismissible"><p>' + message + '</p></div>');
+        $('.alenseo-notices').append($notice);
+        
+        // Automatisch ausblenden nach 5 Sekunden
+        setTimeout(function() {
+            $notice.fadeOut(function() {
+                $(this).remove();
+            });
+        }, 5000);
+    }
+
+    // Post-UI aktualisieren
+    function updatePostUI(postId, data) {
+        const $row = $('tr[data-post-id="' + postId + '"]');
+        if (!$row.length) {
+            return;
+        }
+
+        // Score aktualisieren
+        $row.find('.alenseo-score').text(data.score);
+
+        // Status aktualisieren
+        const $status = $row.find('.alenseo-status');
+        $status.removeClass('alenseo-status-good alenseo-status-ok alenseo-status-poor')
+            .addClass('alenseo-status-' + data.status)
+            .text(data.status_text);
+
+        // Letzte Analyse aktualisieren
+        $row.find('.alenseo-last-analysis').text(data.last_analysis);
+    }
+
+    // Initial API-Status laden
+    updateApiStatus();
+
+    // API-Status alle 5 Minuten aktualisieren
+    setInterval(updateApiStatus, 300000);
 });

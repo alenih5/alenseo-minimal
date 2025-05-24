@@ -76,12 +76,25 @@ $claude_api_stats = array(
 
 $cache_hit_rate = ($claude_api_stats['cache_hits'] / $claude_api_stats['total_requests']) * 100;
 $cache_hit_rate = round($cache_hit_rate);
+
+// API-Status abrufen
+$api = new Alenseo\Alenseo_Claude_API();
+$api_status = $api->get_api_status();
 ?>
 
 <div class="wrap alenseo-dashboard">
     <h1><?php _e('Alenseo SEO Dashboard', 'alenseo'); ?></h1>
     
-    <!-- Statistik-Übersicht -->
+    <!-- API-Status-Anzeige -->
+    <div class="alenseo-api-status-container">
+        <div id="alenseo-api-status" class="alenseo-status-indicator alenseo-status-<?php echo $api_status['valid'] ? 'valid' : ($api_status['configured'] ? 'invalid' : 'unknown'); ?>"></div>
+        <div id="alenseo-api-message" class="alenseo-status-message"><?php echo esc_html($api_status['message']); ?></div>
+    </div>
+
+    <!-- Notices-Container -->
+    <div class="alenseo-notices"></div>
+    
+    <!-- Übersichtsdaten -->
     <div class="alenseo-stats-overview">
         <div class="alenseo-stat-box box-score">
             <h3><?php _e('Gesamtpunktzahl', 'alenseo'); ?></h3>

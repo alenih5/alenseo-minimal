@@ -418,3 +418,165 @@
 .animate-fill {
     animation: fillAnimation 1s ease-out forwards;
 }
+
+/* API-Status-Anzeige */
+.alenseo-api-status-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.alenseo-status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.alenseo-status-valid {
+    background-color: #46b450;
+}
+
+.alenseo-status-invalid {
+    background-color: #dc3232;
+}
+
+.alenseo-status-unknown {
+    background-color: #ffb900;
+}
+
+.alenseo-status-message {
+    font-size: 14px;
+    color: #444;
+}
+
+/* Analyse-Button Styles */
+.alenseo-analyze-button {
+    position: relative;
+    padding: 6px 12px;
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.alenseo-analyze-button:hover:not(:disabled) {
+    background: #005177;
+}
+
+.alenseo-analyze-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.alenseo-analyze-button.alenseo-loading {
+    padding-left: 30px;
+}
+
+.alenseo-analyze-button .spinner {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+}
+
+/* Status-Badges */
+.alenseo-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.alenseo-status-good {
+    background: #46b450;
+    color: #fff;
+}
+
+.alenseo-status-ok {
+    background: #ffb900;
+    color: #fff;
+}
+
+.alenseo-status-poor {
+    background: #dc3232;
+    color: #fff;
+}
+
+/* Notices */
+.alenseo-notices {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+}
+
+.alenseo-notices .notice {
+    margin: 0 0 10px;
+    padding: 10px 15px;
+    border-left-width: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Filter-Bereich */
+.alenseo-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.alenseo-filters select,
+.alenseo-filters input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.alenseo-filters button {
+    padding: 6px 12px;
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.alenseo-filters button:hover {
+    background: #005177;
+}
+
+/* Responsive Anpassungen */
+@media screen and (max-width: 782px) {
+    .alenseo-filters {
+        flex-direction: column;
+    }
+    
+    .alenseo-filters select,
+    .alenseo-filters input[type="text"],
+    .alenseo-filters button {
+        width: 100%;
+    }
+    
+    .alenseo-notices {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+    }
+}

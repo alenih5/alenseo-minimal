@@ -12,6 +12,7 @@
  */
 
 use Alenseo\Alenseo_Database;
+use Alenseo\Alenseo_Claude_API;
 
 // Direkter Zugriff verhindern
 if (!defined('ABSPATH')) {
@@ -57,6 +58,8 @@ class Alenseo_Dashboard {
         add_action('wp_ajax_alenseo_get_post_data', array($this, 'get_post_data'));
         add_action('wp_ajax_alenseo_get_score_history', array($this, 'get_score_history'));
         add_action('wp_ajax_alenseo_get_stats', array($this, 'get_stats'));
+        add_action('wp_ajax_alenseo_get_api_status', array($this, 'get_api_status'));
+        add_action('wp_ajax_alenseo_analyze_post', array($this, 'analyze_post'));
 
         // Scripts und Styles für das Dashboard laden
         add_action('admin_enqueue_scripts', array($this, 'enqueue_dashboard_assets'));
@@ -562,5 +565,137 @@ class Alenseo_Dashboard {
         }
         $data['meta_description'] = $meta_description;
         return $data;
+    }
+
+    /**
+     * AJAX-Handler für den API-Status
+     */
+    public function get_api_status() {
+        // Sicherheitscheck
+        check_ajax_referer('alenseo_ajax_nonce', 'security');
+
+        // Berechtigungscheck
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Keine Berechtigung', 'alenseo')]);
+            return;
+        }
+
+        // API-Status abrufen
+        $api = new Alenseo_Claude_API();
+        $status = $api->get_api_status();
+
+        wp_send_json_success($status);
+    }
+
+    /**
+     * AJAX-Handler für die Post-Analyse
+     */
+    public function analyze_post() {
+        // Sicherheitscheck
+        check_ajax_referer('alenseo_ajax_nonce', 'security');
+
+        // Berechtigungscheck
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(['message' => __('Keine Berechtigung', 'alenseo')]);
+            return;
+        }
+
+        // Post-ID validieren
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+        if ($post_id <= 0) {
+            wp_send_json_error(['message' => __('Ungültige Post-ID', 'alenseo')]);
+            return;
+        }
+
+        // API-Status prüfen
+        $api = new Alenseo_Claude_API();
+        if (!$api->is_api_configured()) {
+            wp_send_json_error(['message' => __('API nicht konfiguriert', 'alenseo')]);
+            return;
+        }
+
+        try {
+            // Post analysieren
+            $result = $this->analyze_post_content($post_id);
+            
+            if (is_wp_error($result)) {
+                wp_send_json_error(['message' => $result->get_error_message()]);
+                return;
+            }
+
+            // Erfolgreiche Analyse
+            wp_send_json_success([
+                'message' => __('Analyse erfolgreich abgeschlossen', 'alenseo'),
+                'score' => $result['score'],
+                'status' => $result['status'],
+                'status_text' => $result['status_text'],
+                'last_analysis' => current_time('mysql')
+            ]);
+
+        } catch (\Exception $e) {
+            wp_send_json_error([
+                'message' => __('Fehler bei der Analyse', 'alenseo'),
+                'debug' => WP_DEBUG ? $e->getMessage() : null
+            ]);
+        }
+    }
+
+    /**
+     * Post-Inhalt analysieren
+     */
+    private function analyze_post_content($post_id) {
+        // Post-Daten abrufen
+        $post = get_post($post_id);
+        if (!$post) {
+            return new \WP_Error('post_not_found', __('Post nicht gefunden', 'alenseo'));
+        }
+
+        // API-Instanz erstellen
+        $api = new Alenseo_Claude_API();
+
+        // Analyse-Prompt erstellen
+        $prompt = sprintf(
+            'Analysiere den folgenden Text auf SEO-Optimierung:\n\n%s\n\n%s',
+            $post->post_title,
+            wp_strip_all_tags($post->post_content)
+        );
+
+        // Analyse durchführen
+        $result = $api->generate_text($prompt, [
+            'max_tokens' => 1024,
+            'temperature' => 0.3,
+            'system_prompt' => 'Du bist ein SEO-Experte. Analysiere den Text und gib einen Score von 0-100 zurück.'
+        ]);
+
+        if (is_wp_error($result)) {
+            return $result;
+        }
+
+        // Score extrahieren
+        preg_match('/\b(\d{1,3})\b/', $result, $matches);
+        $score = isset($matches[1]) ? intval($matches[1]) : 0;
+
+        // Status bestimmen
+        if ($score >= 80) {
+            $status = 'good';
+            $status_text = __('Gut optimiert', 'alenseo');
+        } elseif ($score >= 50) {
+            $status = 'ok';
+            $status_text = __('Teilweise optimiert', 'alenseo');
+        } else {
+            $status = 'poor';
+            $status_text = __('Optimierung nötig', 'alenseo');
+        }
+
+        // Ergebnisse speichern
+        update_post_meta($post_id, '_alenseo_seo_score', $score);
+        update_post_meta($post_id, '_alenseo_seo_status', $status);
+        update_post_meta($post_id, '_alenseo_last_analysis', current_time('mysql'));
+
+        return [
+            'score' => $score,
+            'status' => $status,
+            'status_text' => $status_text
+        ];
     }
 }
