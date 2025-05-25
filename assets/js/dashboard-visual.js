@@ -506,12 +506,22 @@ jQuery(document).ready(function($) {
      * Chart.js dynamisch laden
      */
     function loadChartJs() {
-        var script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-        script.onload = function() {
-            initCharts();
-        };
-        document.head.appendChild(script);
+        return new Promise((resolve, reject) => {
+            if (typeof Chart !== 'undefined') {
+                resolve();
+                return;
+            }
+            
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = function() {
+                resolve();
+            };
+            script.onerror = function() {
+                reject(new Error('Failed to load Chart.js'));
+            };
+            document.head.appendChild(script);
+        });
     }
     
     /**
@@ -675,8 +685,12 @@ jQuery(document).ready(function($) {
 
         // Analyse-Button Status aktualisieren
         const $analyzeButtons = $('.alenseo-analyze-button');
-        $analyzeButtons.prop('disabled', !status.valid)
-            .attr('title', status.valid ? '' : status.message);
+        if (typeof alenseoData !== 'undefined' && alenseoData.isAdmin) {
+            $analyzeButtons.prop('disabled', false).attr('title', '');
+        } else {
+            $analyzeButtons.prop('disabled', !status.valid)
+                .attr('title', status.valid ? '' : status.message);
+        }
     }
 
     // Analyse-Button Click-Handler
@@ -776,4 +790,15 @@ jQuery(document).ready(function($) {
 
     // API-Status alle 5 Minuten aktualisieren
     setInterval(updateApiStatus, 300000);
+
+    // Externe Links im Dashboard immer in neuem Tab öffnen
+    $(document).on('click', 'a[data-external]', function(e) {
+        e.preventDefault();
+        window.open($(this).attr('href'), '_blank');
+    });
+    // Interne Admin-Links korrekt behandeln
+    $(document).on('click', 'a[data-admin-link]', function(e) {
+        e.preventDefault();
+        window.location.href = $(this).attr('href');
+    });
 });

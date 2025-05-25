@@ -30,17 +30,82 @@ class Alenseo_Meta_Box {
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post', array($this, 'save_meta_box_data'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
+        add_action('admin_init', array($this, 'register_settings'));
+        add_action('wp_ajax_alenseo_test_api', array($this, 'test_api_connection'));
+    }
+    
+    public function register_settings() {
+        register_setting('alenseo_settings', 'alenseo_settings');
+        
+        // Erweiterte Standardeinstellungen
+        $default_settings = array(
+            'post_types' => array('post', 'page', 'product'),
+            'claude_api_key' => '',
+            'claude_model' => 'claude-3-opus-20240229',
+            'auto_analyze' => true,
+            'show_meta_box' => true,
+            'enable_keyword_generation' => true,
+            'enable_content_optimization' => true,
+            'enable_meta_optimization' => true
+        );
+        
+        // Einstellungen initialisieren, wenn nicht vorhanden
+        if (!get_option('alenseo_settings')) {
+            update_option('alenseo_settings', $default_settings);
+        }
+    }
+    
+    /**
+     * API-Verbindung testen
+     */
+    public function test_api_connection() {
+        check_ajax_referer('alenseo_ajax_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unzureichende Berechtigungen.'));
+            return;
+        }
+        
+        $settings = get_option('alenseo_settings', array());
+        $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : $settings['claude_api_key'];
+        
+        if (empty($api_key)) {
+            wp_send_json_error(array('message' => 'Kein API-Schlüssel angegeben.'));
+            return;
+        }
+        
+        try {
+            if (!class_exists('Alenseo_Claude_API')) {
+                require_once ALENSEO_MINIMAL_DIR . 'includes/class-claude-api.php';
+            }
+            
+            $claude_api = new Alenseo_Claude_API($api_key, $settings['claude_model']);
+            $test_result = $claude_api->test_api_key();
+            
+            if ($test_result['success']) {
+                // API-Schlüssel speichern, wenn der Test erfolgreich war
+                $settings['claude_api_key'] = $api_key;
+                update_option('alenseo_settings', $settings);
+                
+                wp_send_json_success(array(
+                    'message' => 'API-Verbindung erfolgreich hergestellt.',
+                    'model' => $settings['claude_model']
+                ));
+            } else {
+                wp_send_json_error(array('message' => $test_result['message']));
+            }
+        } catch (Exception $e) {
+            wp_send_json_error(array('message' => 'Fehler beim API-Test: ' . $e->getMessage()));
+        }
     }
     
     /**
      * Meta-Boxen hinzufügen
      */
     public function add_meta_boxes() {
-        // Einstellungen laden
         $settings = get_option('alenseo_settings', array());
         $post_types = isset($settings['post_types']) ? $settings['post_types'] : array('post', 'page');
         
-        // Meta-Box für jede ausgewählte Post-Type hinzufügen
         foreach ($post_types as $post_type) {
             add_meta_box(
                 'alenseo_seo_meta_box',
@@ -59,16 +124,13 @@ class Alenseo_Meta_Box {
     public function enqueue_scripts($hook) {
         global $post;
         
-        // Nur auf der Post-Bearbeitungsseite laden
         if (!($hook == 'post.php' || $hook == 'post-new.php') || !is_object($post)) {
             return;
         }
         
-        // Einstellungen laden
         $settings = get_option('alenseo_settings', array());
         $post_types = isset($settings['post_types']) ? $settings['post_types'] : array('post', 'page');
         
-        // Nur für ausgewählte Post-Types laden
         if (!in_array($post->post_type, $post_types)) {
             return;
         }

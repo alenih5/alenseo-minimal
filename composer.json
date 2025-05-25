@@ -4,23 +4,60 @@
     "type": "wordpress-plugin",
     "require": {
         "php": ">=7.4",
-        "guzzlehttp/guzzle": "^7.0",
-        "monolog/monolog": "^2.0",
-        "defuse/php-encryption": "^2.4"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^9.6",
-        "yoast/phpunit-polyfills": "^4.0"
+        "guzzlehttp/guzzle": "^7.0"
     },
     "autoload": {
         "psr-4": {
             "Alenseo\\": "includes/"
-        }
+        },
+        "classmap": [
+            "includes/"
+        ],
+        "files": []
     },
-    "scripts": {
-        "post-update-cmd": [],
-        "test": "vendor/bin/phpunit",
-        "check-style": "phpcs",
-        "fix-style": "phpcbf"
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "platform": {
+            "php": "7.4"
+        },
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true
+        },
+        "no-plugins": true,
+        "no-scripts": true,
+        "process-timeout": 0,
+        "github-protocols": ["https"],
+        "github-oauth": {},
+        "http-basic": {},
+        "store-auths": false,
+        "use-github-api": false,
+        "disable-tls": false,
+        "secure-http": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "archive": {
+        "exclude": [
+            "tests",
+            "docs",
+            "examples",
+            "*.md",
+            "*.txt",
+            "*.yml",
+            "*.xml",
+            "*.json",
+            "*.lock",
+            ".git*",
+            ".editorconfig",
+            ".gitattributes",
+            ".gitignore",
+            ".php_cs",
+            ".travis.yml",
+            "phpunit.xml",
+            "composer.json",
+            "composer.lock"
+        ]
     }
 }

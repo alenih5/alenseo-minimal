@@ -16,14 +16,75 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// API-Konfiguration prüfen
+$settings = get_option('alenseo_settings', []);
+$claude_api_key = isset($settings['claude_api_key']) ? $settings['claude_api_key'] : '';
+$openai_api_key = isset($settings['openai_api_key']) ? $settings['openai_api_key'] : '';
+$api_configured = !empty($claude_api_key) || !empty($openai_api_key);
+
+/**
+ * WordPress-Posts und -Pages mit SEO-Daten laden
+ */
+function alenseo_get_posts_for_optimizer($args = []) {
+    $defaults = [
+        'post_type' => ['post', 'page'],
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'orderby' => 'date',
+        'order' => 'DESC'
+    ];
+    
+    $args = wp_parse_args($args, $defaults);
+    $posts = get_posts($args);
+    $posts_with_seo = [];
+    
+    foreach ($posts as $post) {
+        // SEO-Meta-Daten abrufen
+        $seo_title = get_post_meta($post->ID, '_alenseo_seo_title', true);
+        $seo_description = get_post_meta($post->ID, '_alenseo_seo_description', true);
+        $focus_keyword = get_post_meta($post->ID, '_alenseo_focus_keyword', true);
+        $seo_score = get_post_meta($post->ID, '_alenseo_seo_score', true);
+        
+        // SEO-Status bestimmen
+        $seo_status = 'unknown';
+        if (!empty($seo_score)) {
+            if ($seo_score >= 80) {
+                $seo_status = 'good';
+            } elseif ($seo_score >= 60) {
+                $seo_status = 'needs_improvement';
+            } else {
+                $seo_status = 'poor';
+            }
+        }
+        
+        // Post-Objekt erweitern
+        $post->seo_title = $seo_title;
+        $post->seo_description = $seo_description;
+        $post->keyword = $focus_keyword;
+        $post->seo_score = $seo_score ?: 0;
+        $post->seo_status = $seo_status;
+        $post->permalink = get_permalink($post->ID);
+        $post->edit_link = get_edit_post_link($post->ID);
+        
+        $posts_with_seo[] = $post;
+    }
+    
+    return $posts_with_seo;
+}
+
+// Posts laden
+$posts = alenseo_get_posts_for_optimizer();
+
 // Globale Dashboard-Instanz für Helper-Funktionen sicherstellen
 global $alenseo_dashboard;
 if (!isset($alenseo_dashboard) || !is_a($alenseo_dashboard, 'Alenseo_Dashboard')) {
-    $alenseo_dashboard = new Alenseo_Dashboard();
+    if (class_exists('Alenseo_Dashboard')) {
+        $alenseo_dashboard = new Alenseo_Dashboard();
+    }
 }
 
 // API-Status prüfen
-if (!$api_configured) {
+if (!$api_configured && !current_user_can('manage_options')) {
     ?>
     <div class="wrap alenseo-optimizer-wrap">
         <h1><span class="dashicons dashicons-chart-bar"></span> <?php _e('SEO-Optimierung', 'alenseo'); ?></h1>
@@ -92,13 +153,100 @@ $total_pages = ceil($total_items / $items_per_page);
 $current_page_items = array_slice($filtered_posts, $offset, $items_per_page);
 ?>
 
-<div class="wrap alenseo-optimizer-wrap">
+<div class="wrap alenseo-optimizer-wrap alenseo-bulk-optimizer">
     <h1><span class="dashicons dashicons-chart-bar"></span> <?php _e('SEO-Optimierung', 'alenseo'); ?></h1>
+    
+    <!-- Notices Container -->
+    <div class="alenseo-notices"></div>
     
     <!-- Filter-Bereich -->
     <div class="alenseo-filters">
-        <form method="get">
-            <input type="hidden" name="page" value="alenseo-optimizer">
+        <select id="post-type-filter" class="filter-select">
+            <option value="any"><?php _e('Alle Post-Typen', 'alenseo'); ?></option>
+            <option value="post"><?php _e('Beiträge', 'alenseo'); ?></option>
+            <option value="page"><?php _e('Seiten', 'alenseo'); ?></option>
+        </select>
+        
+        <select id="status-filter" class="filter-select">
+            <option value=""><?php _e('Alle Status', 'alenseo'); ?></option>
+            <option value="good"><?php _e('Gut', 'alenseo'); ?></option>
+            <option value="needs_improvement"><?php _e('Verbesserung nötig', 'alenseo'); ?></option>
+            <option value="poor"><?php _e('Schlecht', 'alenseo'); ?></option>
+        </select>
+        
+        <input type="search" id="posts-search" placeholder="<?php _e('Posts durchsuchen...', 'alenseo'); ?>">
+        
+        <button type="button" class="button" onclick="loadPostsTable(1)"><?php _e('Filter anwenden', 'alenseo'); ?></button>
+    </div>
+    
+    <!-- Bulk Actions -->
+    <div class="bulk-actions">
+        <button type="button" id="bulk-analyze-btn" class="button button-primary">
+            <?php _e('Ausgewählte analysieren', 'alenseo'); ?>
+        </button>
+        <button type="button" class="button" onclick="$('.post-checkbox').prop('checked', true)">
+            <?php _e('Alle auswählen', 'alenseo'); ?>
+        </button>
+        <button type="button" class="button" onclick="$('.post-checkbox').prop('checked', false)">
+            <?php _e('Auswahl aufheben', 'alenseo'); ?>
+        </button>
+    </div>
+    
+    <!-- Loading State -->
+    <div class="posts-loading">
+        <span class="alenseo-loading"></span>
+        <p><?php _e('Lade Posts...', 'alenseo'); ?></p>
+    </div>
+    
+    <!-- Posts Table Container -->
+    <div class="posts-table-container" style="display: none;">
+        <table class="alenseo-posts-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="select-all-posts">
+                    </th>
+                    <th><?php _e('Titel', 'alenseo'); ?></th>
+                    <th><?php _e('Status', 'alenseo'); ?></th>
+                    <th><?php _e('SEO-Score', 'alenseo'); ?></th>
+                    <th><?php _e('Focus Keyword', 'alenseo'); ?></th>
+                    <th><?php _e('Zuletzt analysiert', 'alenseo'); ?></th>
+                    <th><?php _e('Aktionen', 'alenseo'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Wird per AJAX geladen -->
+            </tbody>
+        </table>
+        
+        <!-- Pagination will be inserted here -->
+        <div class="alenseo-pagination"></div>
+    </div>
+    
+    <!-- No API Warning -->
+    <?php if (!$api_configured): ?>
+    <div class="notice notice-warning">
+        <p><?php _e('Keine API konfiguriert. Bitte konfigurieren Sie mindestens eine API in den Einstellungen.', 'alenseo'); ?></p>
+        <p><a href="<?php echo admin_url('admin.php?page=alenseo-settings'); ?>" class="button button-primary"><?php _e('Zu den Einstellungen', 'alenseo'); ?></a></p>
+    </div>
+    <?php endif; ?>
+</div>
+
+<script>
+jQuery(document).ready(function($) {
+    // Select all checkbox functionality
+    $('#select-all-posts').on('change', function() {
+        $('.post-checkbox').prop('checked', this.checked);
+    });
+    
+    // Update select-all when individual checkboxes change
+    $(document).on('change', '.post-checkbox', function() {
+        const totalCheckboxes = $('.post-checkbox').length;
+        const checkedCheckboxes = $('.post-checkbox:checked').length;
+        $('#select-all-posts').prop('checked', totalCheckboxes === checkedCheckboxes);
+    });
+});
+</script>
             
             <select name="status" id="alenseo-filter-status">
                 <option value=""><?php _e('Alle Status', 'alenseo'); ?></option>

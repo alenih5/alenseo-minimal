@@ -51,8 +51,8 @@ class Alenseo_Dashboard {
         // Datenbank-Klasse instanziieren
         $this->db = new Alenseo_Database();
 
-        // Menü im Admin-Bereich registrieren
-        add_action('admin_menu', array($this, 'add_dashboard_menu'));
+        // DISABLED: Menü wird jetzt zentral in der Hauptklasse verwaltet
+        // add_action('admin_menu', array($this, 'add_dashboard_menu'));
 
         // AJAX-Endpunkte für das Dashboard registrieren
         add_action('wp_ajax_alenseo_get_post_data', array($this, 'get_post_data'));
@@ -63,6 +63,11 @@ class Alenseo_Dashboard {
 
         // Scripts und Styles für das Dashboard laden
         add_action('admin_enqueue_scripts', array($this, 'enqueue_dashboard_assets'));
+
+        // Hinzufügen des Dashboard-Widgets
+        add_action('wp_dashboard_setup', function() {
+            wp_add_dashboard_widget('alenseo_ki_widget', 'Alenseo KI SEO-Tools', 'Alenseo\\alenseo_render_ki_widget');
+        });
     }
 
     /**
@@ -163,6 +168,16 @@ class Alenseo_Dashboard {
             'alenseo-settings',
             array($this, 'display_settings_page')
         );
+        
+        // Untermenü für Seitenoptimierung hinzufügen
+        add_submenu_page(
+            'alenseo-dashboard',
+            'Seiten optimieren',
+            'Seiten optimieren',
+            'manage_options',
+            'alenseo-optimizer',
+            array($this, 'display_optimizer_page')
+        );
     }
 
     /**
@@ -233,6 +248,23 @@ class Alenseo_Dashboard {
         // Prüfen, ob die Template-Datei existiert
         if (file_exists($template_path)) {
             // Template einbinden
+            include $template_path;
+        } else {
+            echo '<div class="error"><p>Template nicht gefunden: ' . esc_html($template_path) . '</p></div>';
+        }
+    }
+
+    /**
+     * Zeigt die Optimierungsseite an
+     */
+    public function display_optimizer_page() {
+        $template_path = plugin_dir_path(dirname(__FILE__)) . 'templates/optimizer-page.php';
+        if (file_exists($template_path)) {
+            // Benötigte Variablen bereitstellen
+            $settings = get_option('alenseo_settings', array());
+            $post_types = get_post_types(array('public' => true), 'objects');
+            $api_configured = class_exists('Alenseo_Claude_API') ? (new \Alenseo_Claude_API())->is_api_configured() : false;
+            $posts = $this->get_all_posts();
             include $template_path;
         } else {
             echo '<div class="error"><p>Template nicht gefunden: ' . esc_html($template_path) . '</p></div>';
@@ -572,18 +604,17 @@ class Alenseo_Dashboard {
      */
     public function get_api_status() {
         // Sicherheitscheck
-        check_ajax_referer('alenseo_ajax_nonce', 'security');
-
-        // Berechtigungscheck
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => __('Keine Berechtigung', 'alenseo')]);
-            return;
+            check_ajax_referer('alenseo_ajax_nonce', 'security');
+            // Berechtigungscheck
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['message' => __('Keine Berechtigung', 'alenseo')]);
+                return;
+            }
         }
-
         // API-Status abrufen
         $api = new Alenseo_Claude_API();
         $status = $api->get_api_status();
-
         wp_send_json_success($status);
     }
 
@@ -592,37 +623,35 @@ class Alenseo_Dashboard {
      */
     public function analyze_post() {
         // Sicherheitscheck
-        check_ajax_referer('alenseo_ajax_nonce', 'security');
-
-        // Berechtigungscheck
-        if (!current_user_can('edit_posts')) {
-            wp_send_json_error(['message' => __('Keine Berechtigung', 'alenseo')]);
-            return;
+        if (!current_user_can('manage_options')) {
+            check_ajax_referer('alenseo_ajax_nonce', 'security');
+            // Berechtigungscheck
+            if (!current_user_can('edit_posts')) {
+                wp_send_json_error(['message' => __('Keine Berechtigung', 'alenseo')]);
+                return;
+            }
         }
-
         // Post-ID validieren
         $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         if ($post_id <= 0) {
             wp_send_json_error(['message' => __('Ungültige Post-ID', 'alenseo')]);
             return;
         }
-
-        // API-Status prüfen
-        $api = new Alenseo_Claude_API();
-        if (!$api->is_api_configured()) {
-            wp_send_json_error(['message' => __('API nicht konfiguriert', 'alenseo')]);
-            return;
+        // API-Status prüfen (nur für Nicht-Admins)
+        if (!current_user_can('manage_options')) {
+            $api = new Alenseo_Claude_API();
+            if (!$api->is_api_configured()) {
+                wp_send_json_error(['message' => __('API nicht konfiguriert', 'alenseo')]);
+                return;
+            }
         }
-
         try {
             // Post analysieren
             $result = $this->analyze_post_content($post_id);
-            
             if (is_wp_error($result)) {
                 wp_send_json_error(['message' => $result->get_error_message()]);
                 return;
             }
-
             // Erfolgreiche Analyse
             wp_send_json_success([
                 'message' => __('Analyse erfolgreich abgeschlossen', 'alenseo'),
@@ -631,7 +660,6 @@ class Alenseo_Dashboard {
                 'status_text' => $result['status_text'],
                 'last_analysis' => current_time('mysql')
             ]);
-
         } catch (\Exception $e) {
             wp_send_json_error([
                 'message' => __('Fehler bei der Analyse', 'alenseo'),
@@ -698,4 +726,112 @@ class Alenseo_Dashboard {
             'status_text' => $status_text
         ];
     }
+}
+
+function alenseo_render_ki_widget() {
+    ?>
+    <div id="alenseo-ki-widget">
+        <h4>KI-SEO-Tools</h4>
+        <div style="margin-bottom:10px;">
+            <label>Thema/Text:</label><br>
+            <textarea id="alenseo_ki_input" rows="3" style="width:100%"></textarea>
+        </div>
+        <div style="margin-bottom:10px;">
+            <button class="button" onclick="alenseoKI('meta_title')">Meta-Title</button>
+            <button class="button" onclick="alenseoKI('meta_description')">Meta-Description</button>
+            <button class="button" onclick="alenseoKI('seo_text')">SEO-Text</button>
+            <button class="button" onclick="alenseoKI('optimization')">Optimierung</button>
+            <button class="button" onclick="alenseoKI('keywords')">Keywords</button>
+        </div>
+        <div id="alenseo_ki_result" style="background:#f9f9f9;padding:10px;border-radius:4px;min-height:40px;"></div>
+        <script>
+        function alenseoKI(type) {
+            var val = document.getElementById('alenseo_ki_input').value;
+            var result = document.getElementById('alenseo_ki_result');
+            result.innerHTML = '⏳ Bitte warten...';
+            var data = {
+                action: '',
+                nonce: '<?php echo wp_create_nonce('alenseo_ajax_nonce'); ?>',
+                provider: 'openai',
+            };
+            if(type==='meta_title') { data.action='alenseo_generate_meta_title'; data.content=val; }
+            if(type==='meta_description') { data.action='alenseo_generate_meta_description'; data.content=val; }
+            if(type==='seo_text') { data.action='alenseo_generate_seo_text'; data.topic=val; }
+            if(type==='optimization') { data.action='alenseo_optimization_suggestions'; data.content=val; }
+            if(type==='keywords') { data.action='alenseo_keyword_analysis'; data.content=val; }
+            jQuery.post(ajaxurl, data, function(resp) {
+                if(resp.success) {
+                    if(type==='meta_title') result.innerHTML = '<b>Meta-Title:</b><br>'+resp.data.meta_title;
+                    if(type==='meta_description') result.innerHTML = '<b>Meta-Description:</b><br>'+resp.data.meta_description;
+                    if(type==='seo_text') result.innerHTML = '<b>SEO-Text:</b><br>'+resp.data.seo_text;
+                    if(type==='optimization') result.innerHTML = '<b>Optimierungsvorschläge:</b><br>'+resp.data.suggestions.replace(/\n/g,'<br>');
+                    if(type==='keywords') result.innerHTML = '<b>Keywords:</b><br>'+resp.data.keywords;
+                } else {
+                    result.innerHTML = 'Fehler: '+(resp.data && resp.data.message ? resp.data.message : 'Unbekannter Fehler');
+                }
+            });
+        }
+        </script>
+    </div>
+    <?php
+}
+
+// Claude Multi-Modell-Admin-Interface
+if (!class_exists('Claude_Model_Admin')) {
+    class Claude_Model_Admin {
+        public function __construct() {
+            // DISABLED: Admin-Menü wird jetzt zentral in der Hauptklasse verwaltet
+            // add_action('admin_menu', [$this, 'add_admin_page']);
+            add_action('admin_init', [$this, 'register_settings']);
+            add_action('wp_ajax_test_all_claude_models', [$this, 'ajax_test_all_models']);
+            add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
+        }
+        public function add_admin_page() {
+            add_submenu_page(
+                'alenseo-dashboard',
+                'Claude Modelle',
+                'Claude Modelle',
+                'manage_options',
+                'alenseo-claude-models',
+                [$this, 'render_admin_page']
+            );
+        }
+        public function register_settings() {
+            register_setting('alenseo_claude_models', 'alenseo_claude_model_preferences');
+            register_setting('alenseo_claude_models', 'alenseo_claude_default_model');
+        }
+        public function enqueue_scripts($hook) {
+            if (strpos($hook, 'alenseo-claude-models') === false) {
+                return;
+            }
+            wp_enqueue_script('jquery');
+            wp_localize_script('jquery', 'alenseoClaudeAdmin', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('alenseo_claude_admin')
+            ]);
+        }
+        public function render_admin_page() {
+            echo '<div class="wrap"><h1>Claude Modelle</h1><p>Hier kannst du die Claude-Modelle verwalten und testen.</p></div>';
+        }
+        public function ajax_test_all_models() {
+            check_ajax_referer('alenseo_claude_admin', 'nonce');
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['message' => 'Keine Berechtigung']);
+                return;
+            }
+            try {
+                $api = new \Alenseo\Alenseo_Claude_API();
+                if (!$api->is_api_configured()) {
+                    wp_send_json_error(['message' => 'Claude API nicht konfiguriert']);
+                    return;
+                }
+                $results = $api->test_all_models();
+                wp_send_json_success($results);
+            } catch (\Exception $e) {
+                wp_send_json_error(['message' => 'Fehler beim Testen: ' . $e->getMessage()]);
+            }
+        }
+    }
+    // Admin-Interface initialisieren
+    new Claude_Model_Admin();
 }

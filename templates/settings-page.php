@@ -129,6 +129,9 @@ if (class_exists('Alenseo_Claude_API')) {
 $post_types = get_post_types(array(
     'public' => true
 ), 'objects');
+
+$openai_api_key = $settings['openai_api_key'] ?? '';
+$claude_api_key = $settings['claude_api_key'] ?? '';
 ?>
 
 <div class="wrap">
@@ -165,18 +168,26 @@ $post_types = get_post_types(array(
         <div id="api" class="alenseo-settings-tab">
             <h2>KI API Einstellungen</h2>
             <table class="form-table">
-                <tr>
-                    <th>Claude API-Schlüssel</th>
-                    <td>
-                        <input type="password" name="claude_api_key" value="<?php echo esc_attr($settings['claude_api_key']); ?>">
-                        <span class="status-indicator">✔</span>
+                <tr valign="top">
+                    <th scope="row">OpenAI API Key (ChatGPT)</th>
+                    <td style="position:relative;">
+                        <input type="text" id="openai_api_key" name="alenseo_settings[openai_api_key]" value="<?php echo esc_attr($openai_api_key); ?>" size="60" autocomplete="off" />
+                        <span id="openai-api-status-indicator" style="display:inline-block;width:18px;height:18px;border-radius:50%;margin-left:10px;vertical-align:middle;background:#ccc;border:1px solid #bbb;"></span>
+                        <span id="openai-api-status-text" style="margin-left:10px;color:#666;">
+                            <?php echo !empty($openai_api_key) ? __('Status unbekannt', 'alenseo') : __('Nicht verbunden', 'alenseo'); ?>
+                        </span>
+                        <p class="description"><?php _e('Trage hier deinen OpenAI API-Key für ChatGPT ein.', 'alenseo'); ?></p>
                     </td>
                 </tr>
-                <tr>
-                    <th>ChatGPT API-Schlüssel</th>
-                    <td>
-                        <input type="password" name="chatgpt_api_key" value="<?php echo esc_attr($settings['chatgpt_api_key']); ?>">
-                        <span class="status-indicator">✔</span>
+                <tr valign="top">
+                    <th scope="row">Claude API Key</th>
+                    <td style="position:relative;">
+                        <input type="text" id="claude_api_key" name="alenseo_settings[claude_api_key]" value="<?php echo esc_attr($claude_api_key); ?>" size="60" autocomplete="off" />
+                        <span id="claude-api-status-indicator" style="display:inline-block;width:18px;height:18px;border-radius:50%;margin-left:10px;vertical-align:middle;background:#ccc;border:1px solid #bbb;"></span>
+                        <span id="claude-api-status-text" style="margin-left:10px;color:#666;">
+                            <?php echo $api_configured ? __('API verbunden', 'alenseo') : __('Nicht verbunden', 'alenseo'); ?>
+                        </span>
+                        <p class="description"><?php _e('Trage hier deinen Claude API-Key ein.', 'alenseo'); ?></p>
                     </td>
                 </tr>
             </table>
@@ -189,13 +200,13 @@ $post_types = get_post_types(array(
                 <tr>
                     <th>Website-Briefing</th>
                     <td>
-                        <textarea name="website_briefing" rows="5" cols="50"><?php echo esc_textarea($settings['website_briefing']); ?></textarea>
+                        <textarea name="website_briefing" rows="5" cols="50"><?php echo esc_textarea(isset($settings['website_briefing']) ? $settings['website_briefing'] : ''); ?></textarea>
                     </td>
                 </tr>
                 <tr>
                     <th>Keywords</th>
                     <td>
-                        <input type="text" name="custom_keywords" value="<?php echo esc_attr($settings['custom_keywords']); ?>">
+                        <input type="text" name="custom_keywords" value="<?php echo esc_attr(isset($settings['custom_keywords']) ? $settings['custom_keywords'] : ''); ?>">
                         <p class="description">Geben Sie Schlüsselwörter ein, die der Generator verwenden soll.</p>
                     </td>
                 </tr>
@@ -260,16 +271,15 @@ jQuery(document).ready(function($) {
         var $button = $(this);
         var originalText = $button.text();
         $button.text('<?php _e('Wird getestet...', 'alenseo'); ?>').prop('disabled', true);
-        
-        // AJAX-Anfrage zum Testen der API
+          // AJAX-Anfrage zum Testen der API
         $.ajax({
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'alenseo_test_api',
+                action: 'alenseo_test_claude_api',
                 api_key: apiKey,
                 model: model,
-                nonce: '<?php echo wp_create_nonce('alenseo_test_api_nonce'); ?>'
+                nonce: '<?php echo wp_create_nonce('alenseo_ajax_nonce'); ?>'
             },
             success: function(response) {
                 if (response.success) {
@@ -312,6 +322,91 @@ jQuery(document).ready(function($) {
             apiKeyField.attr('type', 'password');
             icon.removeClass('dashicons-hidden').addClass('dashicons-visibility');
         }
+    });
+
+    function updateClaudeApiStatus(status, message) {
+        var $indicator = $('#claude-api-status-indicator');
+        var $text = $('#claude-api-status-text');
+        if(status === 'success') {
+            $indicator.css('background','#28a745').css('border-color','#28a745');
+            $text.text(message || 'API verbunden').css('color','#28a745');
+        } else if(status === 'error') {
+            $indicator.css('background','#dc3545').css('border-color','#dc3545');
+            $text.text(message || 'API nicht verbunden').css('color','#dc3545');
+        } else {
+            $indicator.css('background','#ccc').css('border-color','#bbb');
+            $text.text(message || 'Status unbekannt').css('color','#666');
+        }
+    }
+
+    // Initialstatus setzen
+    <?php if ($api_configured): ?>
+        updateClaudeApiStatus('success', '<?php echo esc_js(__('API verbunden', 'alenseo')); ?>');
+    <?php else: ?>
+        updateClaudeApiStatus('error', '<?php echo esc_js(__('Nicht verbunden', 'alenseo')); ?>');
+    <?php endif; ?>
+
+    $('#claude_api_key').on('change blur', function(){
+        var key = $(this).val();
+        if(!key) {
+            updateClaudeApiStatus('error', '<?php echo esc_js(__('Kein API-Key eingegeben', 'alenseo')); ?>');
+            return;
+        }        // AJAX-Check
+        $.post(ajaxurl, {
+            action: 'alenseo_test_claude_api',
+            nonce: '<?php echo wp_create_nonce('alenseo_ajax_nonce'); ?>',
+            api_key: key,
+            model: '<?php echo esc_js($settings['claude_model']); ?>'
+        }, function(resp){
+            if(resp.success) {
+                updateClaudeApiStatus('success', resp.data && resp.data.message ? resp.data.message : 'API verbunden');
+            } else {
+                // Fehlertext IMMER anzeigen
+                var msg = (resp.data && resp.data.message) ? resp.data.message : 'API nicht verbunden';
+                updateClaudeApiStatus('error', msg);
+            }
+        });
+    });
+
+    function updateOpenAiApiStatus(status, message) {
+        var $indicator = $('#openai-api-status-indicator');
+        var $text = $('#openai-api-status-text');
+        if(status === 'success') {
+            $indicator.css('background','#28a745').css('border-color','#28a745');
+            $text.text(message || 'API verbunden').css('color','#28a745');
+        } else if(status === 'error') {
+            $indicator.css('background','#dc3545').css('border-color','#dc3545');
+            $text.text(message || 'API nicht verbunden').css('color','#dc3545');
+        } else {
+            $indicator.css('background','#ccc').css('border-color','#bbb');
+            $text.text(message || 'Status unbekannt').css('color','#666');
+        }
+    }
+
+    // Initialstatus für OpenAI
+    <?php if (!empty($openai_api_key)): ?>
+        updateOpenAiApiStatus('unknown', '<?php echo esc_js(__('Status unbekannt', 'alenseo')); ?>');
+    <?php else: ?>
+        updateOpenAiApiStatus('error', '<?php echo esc_js(__('Nicht verbunden', 'alenseo')); ?>');
+    <?php endif; ?>
+
+    $('#openai_api_key').on('change blur', function(){
+        var key = $(this).val();
+        if(!key) {
+            updateOpenAiApiStatus('error', '<?php echo esc_js(__('Kein API-Key eingegeben', 'alenseo')); ?>');
+            return;
+        }
+        // AJAX-Check        $.post(ajaxurl, {
+            action: 'alenseo_test_openai_api',
+            nonce: '<?php echo wp_create_nonce('alenseo_ajax_nonce'); ?>',
+            api_key: key
+        }, function(resp){
+            if(resp.success) {
+                updateOpenAiApiStatus('success', resp.data && resp.data.message ? resp.data.message : 'API verbunden');
+            } else {
+                updateOpenAiApiStatus('error', resp.data && resp.data.message ? resp.data.message : 'API nicht verbunden');
+            }
+        });
     });
 });
 </script>

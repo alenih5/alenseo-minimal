@@ -23,3 +23,12 @@ Thumbs.db
 
 # Node modules
 node_modules/
+
+# Additional files
+/vendor/
+/node_modules/
+.git/
+*.cache
+.phpunit.result.cache
+wp-tests-config.php
+phpunit.xml

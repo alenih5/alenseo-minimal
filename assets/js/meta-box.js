@@ -3,21 +3,43 @@
  */
 
 jQuery(document).ready(function($) {
-    console.log('Alenseo SEO meta-box.js geladen');
+    'use strict';
     
-    // Analyse-Button
-    $('.alenseo-analyze-button').on('click', function() {
-        var button = $(this);
-        var postId = button.data('post-id');
-        
-        // Button deaktivieren und Ladeanimation anzeigen
-        button.prop('disabled', true);
-        var originalText = button.html();
-        button.html('<span class="dashicons dashicons-update"></span> Analysiere...');
-        
-        // AJAX-Anfrage für Analyse
+    // API-Status prüfen
+    function checkApiStatus() {
         $.ajax({
-            url: alenseoData.ajaxUrl,
+            url: alenseoData.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_test_api',
+                nonce: alenseoData.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('.alenseo-api-status').text('API-Verbindung aktiv').css('color', '#28a745');
+                } else {
+                    $('.alenseo-api-status').text('API-Verbindung nicht verfügbar').css('color', '#dc3545');
+                }
+            },
+            error: function() {
+                $('.alenseo-api-status').text('API-Verbindung nicht verfügbar').css('color', '#dc3545');
+            }
+        });
+    }
+    
+    // Initial API-Status prüfen
+    checkApiStatus();
+    
+    // Post analysieren
+    $('.alenseo-analyze-button').on('click', function(e) {
+        e.preventDefault();
+        const $button = $(this);
+        const postId = $button.data('post-id');
+        
+        $button.prop('disabled', true).html('<span class="alenseo-loading"></span> ' + alenseoData.i18n.analyzing);
+        
+        $.ajax({
+            url: alenseoData.ajaxurl,
             type: 'POST',
             data: {
                 action: 'alenseo_analyze_post',
@@ -25,51 +47,32 @@ jQuery(document).ready(function($) {
                 nonce: alenseoData.nonce
             },
             success: function(response) {
-                // Button zurücksetzen
-                button.prop('disabled', false);
-                button.html(originalText);
-                
                 if (response.success) {
-                    // Erfolgsmeldung
-                    alert(response.data.message || 'Analyse erfolgreich durchgeführt.');
-                    
-                    // Seite neu laden, um Ergebnisse anzuzeigen
-                    location.reload();
+                    updateSeoScore(response.data.score, response.data.status);
+                    showNotice('success', response.data.message);
                 } else {
-                    // Fehlermeldung
-                    alert(response.data.message || 'Fehler bei der Analyse.');
+                    showNotice('error', response.data.message);
                 }
             },
             error: function() {
-                // Button zurücksetzen
-                button.prop('disabled', false);
-                button.html(originalText);
-                
-                // Fehlermeldung
-                alert('Fehler bei der Kommunikation mit dem Server.');
+                showNotice('error', alenseoData.i18n.error);
+            },
+            complete: function() {
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-search"></span> ' + alenseoData.i18n.analyze);
             }
         });
     });
     
-    // Keyword-Vorschläge-Button
-    $('.alenseo-generate-button').on('click', function() {
-        var button = $(this);
-        var postId = button.data('post-id');
-        var suggestionsContainer = $('.alenseo-keyword-suggestions');
-        var suggestionsList = $('.alenseo-keyword-suggestions-list');
+    // Keywords generieren
+    $('.alenseo-generate-keywords-button').on('click', function(e) {
+        e.preventDefault();
+        const $button = $(this);
+        const postId = $button.data('post-id');
         
-        // Container anzeigen und Button deaktivieren
-        suggestionsContainer.show();
-        button.prop('disabled', true);
-        var originalText = button.html();
-        button.html('<span class="dashicons dashicons-update"></span> Generiere...');
+        $button.prop('disabled', true).html('<span class="alenseo-loading"></span> ' + alenseoData.i18n.generating);
         
-        // Lade-Animation anzeigen
-        suggestionsList.html('<div class="alenseo-keyword-suggestions-loading"><span class="dashicons dashicons-update"></span> Generiere Vorschläge...</div>');
-        
-        // AJAX-Anfrage für Keyword-Vorschläge
         $.ajax({
-            url: alenseoData.ajaxUrl,
+            url: alenseoData.ajaxurl,
             type: 'POST',
             data: {
                 action: 'alenseo_generate_keywords',
@@ -77,68 +80,179 @@ jQuery(document).ready(function($) {
                 nonce: alenseoData.nonce
             },
             success: function(response) {
-                // Button zurücksetzen
-                button.prop('disabled', false);
-                button.html(originalText);
-                
-                if (response.success && response.data.keywords && response.data.keywords.length > 0) {
-                    // Vorschläge anzeigen
-                    renderKeywordSuggestions(suggestionsList, response.data.keywords);
+                if (response.success) {
+                    renderKeywordSuggestions(response.data.suggestions);
+                    showNotice('success', response.data.message);
                 } else {
-                    // Meldung, wenn keine Vorschläge gefunden wurden
-                    suggestionsList.html('<div class="notice notice-info"><p>Keine Keyword-Vorschläge gefunden.</p></div>');
+                    showNotice('error', response.data.message);
                 }
             },
             error: function() {
-                // Button zurücksetzen
-                button.prop('disabled', false);
-                button.html(originalText);
-                
-                // Fehlermeldung
-                suggestionsList.html('<div class="notice notice-error"><p>Fehler bei der Kommunikation mit dem Server.</p></div>');
+                showNotice('error', alenseoData.i18n.error);
+            },
+            complete: function() {
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-lightbulb"></span> ' + alenseoData.i18n.generateKeywords);
             }
         });
     });
     
-    /**
-     * Keyword-Vorschläge rendern
-     */
-    function renderKeywordSuggestions(container, keywords) {
-        var html = '';
+    // Meta-Beschreibung optimieren
+    $('.alenseo-optimize-meta-button').on('click', function(e) {
+        e.preventDefault();
+        const $button = $(this);
+        const postId = $button.data('post-id');
+        const keyword = $('#alenseo_focus_keyword').val();
         
-        keywords.forEach(function(keyword) {
-            html += '<div class="alenseo-keyword-suggestion">';
-            html += '<div class="alenseo-keyword-suggestion-text">' + keyword.keyword + '</div>';
-            html += '<div class="alenseo-keyword-suggestion-actions">';
-            if (keyword.score) {
-                html += '<span class="alenseo-keyword-suggestion-score">Score: ' + keyword.score + '</span> ';
+        if (!keyword) {
+            showNotice('error', alenseoData.i18n.keywordRequired);
+            return;
+        }
+        
+        $button.prop('disabled', true).html('<span class="alenseo-loading"></span> ' + alenseoData.i18n.optimizing);
+        
+        $.ajax({
+            url: alenseoData.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_optimize_meta_description',
+                post_id: postId,
+                keyword: keyword,
+                nonce: alenseoData.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#alenseo_meta_description').val(response.data.meta_description);
+                    updateMetaDescriptionCount();
+                    showNotice('success', response.data.message);
+                } else {
+                    showNotice('error', response.data.message);
+                }
+            },
+            error: function() {
+                showNotice('error', alenseoData.i18n.error);
+            },
+            complete: function() {
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-edit"></span> ' + alenseoData.i18n.optimizeMeta);
             }
-            html += '<button type="button" class="button button-small alenseo-keyword-suggestion-button" data-keyword="' + keyword.keyword + '">';
-            html += '<span class="dashicons dashicons-yes"></span> Auswählen';
-            html += '</button>';
-            html += '</div>';
-            html += '</div>';
+        });
+    });
+    
+    // Content optimieren
+    $('.alenseo-optimize-content-button').on('click', function(e) {
+        e.preventDefault();
+        const $button = $(this);
+        const postId = $button.data('post-id');
+        const keyword = $('#alenseo_focus_keyword').val();
+        
+        if (!keyword) {
+            showNotice('error', alenseoData.i18n.keywordRequired);
+            return;
+        }
+        
+        $button.prop('disabled', true).html('<span class="alenseo-loading"></span> ' + alenseoData.i18n.optimizing);
+        
+        $.ajax({
+            url: alenseoData.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'alenseo_optimize_content',
+                post_id: postId,
+                keyword: keyword,
+                nonce: alenseoData.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (typeof tinyMCE !== 'undefined' && tinyMCE.get('content')) {
+                        tinyMCE.get('content').setContent(response.data.content);
+                    } else {
+                        $('#content').val(response.data.content);
+                    }
+                    showNotice('success', response.data.message);
+                } else {
+                    showNotice('error', response.data.message);
+                }
+            },
+            error: function() {
+                showNotice('error', alenseoData.i18n.error);
+            },
+            complete: function() {
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-edit"></span> ' + alenseoData.i18n.optimizeContent);
+            }
+        });
+    });
+    
+    // Keyword-Vorschläge rendern
+    function renderKeywordSuggestions(suggestions) {
+        const $container = $('.alenseo-keyword-suggestions');
+        const $list = $('.alenseo-keyword-suggestions-list');
+        
+        $list.empty();
+        
+        suggestions.forEach(function(suggestion) {
+            $list.append(`
+                <div class="alenseo-keyword-suggestion" data-keyword="${suggestion.keyword}">
+                    ${suggestion.keyword}
+                </div>
+            `);
         });
         
-        // HTML einfügen
-        container.html(html);
-        
-        // Event-Listener für Auswahl-Buttons
-        $('.alenseo-keyword-suggestion-button').on('click', function() {
-            var keyword = $(this).data('keyword');
-            $('#alenseo_focus_keyword').val(keyword);
-            
-            // Keyword-Vorschläge ausblenden
-            $('.alenseo-keyword-suggestions').hide();
-        });
+        $container.show();
     }
     
-    // Speichern des Keywords bei Enter-Taste
-    $('#alenseo_focus_keyword').on('keypress', function(e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            // Fokus entfernen, um sicherzustellen, dass das Feld aktualisiert wird
-            $(this).blur();
-        }
+    // Keyword-Vorschlag auswählen
+    $(document).on('click', '.alenseo-keyword-suggestion', function() {
+        const keyword = $(this).data('keyword');
+        $('#alenseo_focus_keyword').val(keyword);
+        $('.alenseo-keyword-suggestions').hide();
     });
+    
+    // SEO-Score aktualisieren
+    function updateSeoScore(score, status) {
+        $('.alenseo-seo-score').text(score);
+        $('.alenseo-seo-status')
+            .removeClass('alenseo-status-good alenseo-status-ok alenseo-status-poor')
+            .addClass('alenseo-status-' + status)
+            .text(getStatusText(status));
+    }
+    
+    // Status-Text abrufen
+    function getStatusText(status) {
+        switch(status) {
+            case 'good':
+                return alenseoData.i18n.statusGood;
+            case 'ok':
+                return alenseoData.i18n.statusOk;
+            case 'poor':
+                return alenseoData.i18n.statusPoor;
+            default:
+                return alenseoData.i18n.statusUnknown;
+        }
+    }
+    
+    // Benachrichtigung anzeigen
+    function showNotice(type, message) {
+        const $notice = $('<div>')
+            .addClass('alenseo-notice alenseo-notice-' + type)
+            .text(message);
+        
+        $('.alenseo-notices').append($notice);
+        
+        setTimeout(function() {
+            $notice.fadeOut(function() {
+                $(this).remove();
+            });
+        }, 5000);
+    }
+    
+    // Meta-Beschreibung Zeichen zählen
+    function updateMetaDescriptionCount() {
+        const count = $('#alenseo_meta_description').val().length;
+        $('#alenseo_meta_description_count').text(count);
+    }
+    
+    // Meta-Beschreibung Zeichen zählen bei Änderung
+    $('#alenseo_meta_description').on('input', updateMetaDescriptionCount);
+    
+    // Initial Meta-Beschreibung Zeichen zählen
+    updateMetaDescriptionCount();
 });

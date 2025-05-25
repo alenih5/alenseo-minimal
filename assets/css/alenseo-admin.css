@@ -1,0 +1,383 @@
+/**
+ * Alenseo SEO Admin CSS
+ * Styles for the WordPress admin interface
+ */
+
+.alenseo-admin-wrap {
+    max-width: 1200px;
+    margin: 20px 0;
+}
+
+.alenseo-admin-wrap h1 {
+    color: #23282d;
+    font-size: 23px;
+    font-weight: 400;
+    margin: 0 0 20px 0;
+    padding: 9px 0 4px 0;
+    line-height: 1.3;
+}
+
+.alenseo-admin-wrap h1 .dashicons {
+    color: #3498db;
+    margin-right: 8px;
+}
+
+/* Settings Page */
+.alenseo-settings-wrap .form-table th {
+    width: 200px;
+    padding: 20px 10px 20px 0;
+}
+
+.alenseo-settings-wrap .form-table td {
+    padding: 15px 10px;
+}
+
+.alenseo-api-test-button {
+    margin-left: 10px;
+}
+
+.alenseo-api-status {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.alenseo-api-status.success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.alenseo-api-status.error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.alenseo-api-status.loading {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+/* API Status Styles */
+.api-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.api-status-item {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #ddd;
+}
+
+.status-configured {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-not-configured {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #dc3545;
+    font-style: italic;
+}
+
+/* Optimizer Page */
+.alenseo-optimizer-wrap {
+    max-width: 1400px;
+}
+
+.alenseo-filters {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.alenseo-filters .form-table {
+    margin: 0;
+}
+
+.alenseo-filters .form-table th,
+.alenseo-filters .form-table td {
+    padding: 10px;
+}
+
+.alenseo-posts-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.alenseo-posts-table th,
+.alenseo-posts-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.alenseo-posts-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.alenseo-posts-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.alenseo-posts-table .status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.alenseo-posts-table .status-good {
+    background-color: #28a745;
+}
+
+.alenseo-posts-table .status-warning {
+    background-color: #ffc107;
+}
+
+.alenseo-posts-table .status-poor {
+    background-color: #dc3545;
+}
+
+.alenseo-analyze-button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.alenseo-analyze-button:hover {
+    background: #2980b9;
+}
+
+.alenseo-analyze-button:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+}
+
+/* Dashboard */
+.alenseo-dashboard-wrap {
+    max-width: 1400px;
+}
+
+.alenseo-dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.alenseo-stat-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.alenseo-stat-card h3 {
+    margin: 0 0 10px 0;
+    color: #23282d;
+    font-size: 16px;
+}
+
+.alenseo-stat-card .stat-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #3498db;
+    margin: 10px 0;
+}
+
+.alenseo-stat-card .stat-description {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Loading states */
+.alenseo-loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.alenseo-loading-text {
+    color: #666;
+    font-style: italic;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Notices */
+.alenseo-notice {
+    margin: 20px 0;
+    padding: 12px;
+    border-left: 4px solid #3498db;
+    background: #fff;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.alenseo-notice.notice-error {
+    border-left-color: #dc3545;
+}
+
+.alenseo-notice.notice-warning {
+    border-left-color: #ffc107;
+}
+
+.alenseo-notice.notice-success {
+    border-left-color: #28a745;
+}
+
+/* Recent Activity */
+.recent-activity-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* Bulk Actions */
+.bulk-actions {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.bulk-actions button {
+    margin-right: 10px;
+}
+
+/* Filters */
+.alenseo-filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.alenseo-filters select,
+.alenseo-filters input {
+    padding: 8px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.alenseo-filters input[type="search"] {
+    min-width: 200px;
+}
+
+/* Pagination */
+.alenseo-pagination {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.alenseo-pagination .page-numbers {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 2px;
+    text-decoration: none;
+    border: 1px solid #ccd0d4;
+    color: #0073aa;
+}
+
+.alenseo-pagination .page-numbers:hover,
+.alenseo-pagination .page-numbers.current {
+    background: #0073aa;
+    color: white;
+}
+
+/* Inline notices */
+.notice.inline {
+    margin: 5px 0 15px 0;
+    border-left: 4px solid #ffb900;
+    padding: 1px 12px;
+    background: #fff;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.notice.inline p {
+    margin: 0.5em 0;
+    padding: 2px 0;
+}
+
+/* Error states */
+.alenseo-error-state {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.alenseo-error-state .dashicons {
+    font-size: 48px;
+    color: #dc3545;
+    margin-bottom: 15px;
+}
+
+/* Charts containers */
+#scoreChart, #healthChart {
+    max-width: 120px;
+    max-height: 120px;
+}
+
+/* Button variations */
+.alenseo-btn-primary {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.alenseo-btn-primary:hover {
+    background: #005a87;
+}
+
+.alenseo-btn-primary:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+}
