@@ -1,205 +1,43 @@
-/**
- * Alenseo SEO Meta-Box Styles
- */
-
-.alenseo-meta-box {
-    padding: 15px;
-    background: #fff;
-}
-
-/* API-Status */
-.alenseo-api-status-container {
-    margin-bottom: 15px;
-    padding: 8px;
-    background: #f8f9fa;
-    border-radius: 4px;
-}
-
-.alenseo-api-status {
-    font-size: 13px;
-    color: #666;
-}
-
-/* Benachrichtigungen */
-.alenseo-notices {
-    margin-bottom: 15px;
-}
-
-.alenseo-notice {
+#seo-ai-meta-container {
     padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-}
-
-.alenseo-notice-success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.alenseo-notice-error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-/* SEO-Score */
-.alenseo-seo-score-container {
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.alenseo-seo-score-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 15px 0;
-}
-
-.alenseo-seo-score-circle {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 15px;
-    border: 2px solid #ddd;
-}
-
-.alenseo-seo-score {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-}
-
-.alenseo-seo-status {
-    font-size: 16px;
-    font-weight: 500;
-}
-
-.alenseo-status-good {
-    color: #28a745;
-}
-
-.alenseo-status-ok {
-    color: #ffc107;
-}
-
-.alenseo-status-poor {
-    color: #dc3545;
-}
-
-/* Keyword-Bereich */
-.alenseo-keyword-section {
-    margin-bottom: 20px;
-}
-
-.alenseo-keyword-input-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.alenseo-keyword-suggestions {
-    margin-top: 15px;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 4px;
-}
-
-.alenseo-keyword-suggestions-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
     margin-top: 10px;
 }
-
-.alenseo-keyword-suggestion {
-    padding: 5px 10px;
+#seo-ai-meta-container h4 {
+    margin: 10px 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+#seo-ai-meta-container textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 4px;
+}
+#seo-ai-meta-container .button {
+    margin-bottom: 10px;
+}
+#seo-ai-meta-container #seo-ai-analyze-result pre {
     background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.alenseo-keyword-suggestion:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
-}
-
-/* Meta-Description */
-.alenseo-meta-description-section {
-    margin-bottom: 20px;
-}
-
-.alenseo-meta-description-container {
-    margin-bottom: 10px;
-}
-
-.alenseo-meta-description-count {
+    border: 1px solid #ccc;
+    padding: 6px;
+    max-height: 200px;
+    overflow: auto;
     font-size: 12px;
-    color: #666;
-    text-align: right;
+    line-height: 1.4;
+}
+#seo-ai-meta-container .error {
+    color: #dc3232;
+    font-weight: bold;
 }
 
-/* Content-Optimierung */
-.alenseo-content-optimization-section {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #ddd;
-}
-
-/* Buttons */
-.alenseo-analyze-button, 
-.alenseo-generate-keywords-button,
-.alenseo-optimize-meta-button,
-.alenseo-optimize-content-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.alenseo-analyze-button .dashicons, 
-.alenseo-generate-keywords-button .dashicons,
-.alenseo-optimize-meta-button .dashicons,
-.alenseo-optimize-content-button .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-}
-
-/* Ladeanimation */
-.alenseo-loading {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #3498db;
-    border-radius: 50%;
-    animation: alenseo-spin 1s linear infinite;
-}
-
-@keyframes alenseo-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Responsive Anpassungen */
-@media screen and (max-width: 782px) {
-    .alenseo-keyword-input-container {
-        flex-direction: column;
-}
-
-    .alenseo-seo-score-display {
-        flex-direction: column;
-        gap: 10px;
-}
-
-    .alenseo-seo-score-circle {
-        margin-right: 0;
-    margin-bottom: 10px;
+/* Responsive Mobile Styles */
+@media (max-width: 600px) {
+    #seo-ai-meta-container {
+        padding: 5px;
     }
-}
+    #seo-ai-meta-container textarea,
+    #seo-ai-meta-container .button {
+        width: 100%;
+    }
+} 
