@@ -119,6 +119,12 @@ $seo_status_options = [
     'critical' => sprintf(__('Kritisch (< 60) (%d)', 'seo-ai-master'), $stats['critical_urls']),
     'good' => sprintf(__('Gut (≥ 80)', 'seo-ai-master'))
 ];
+
+// Beispiel-Status für KI-Modelle (später dynamisch setzen)
+$claude_connected = true;
+$gpt4o_connected = true;
+$gpt4_connected = false;
+$gemini_connected = true;
 ?>
 
 <style>
@@ -157,7 +163,7 @@ $seo_status_options = [
 /* Statistics Cards */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
@@ -268,11 +274,11 @@ $seo_status_options = [
 }
 
 .filter-input, .filter-select {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(30, 32, 44, 0.95) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
     border-radius: 8px;
     padding: 0.5rem 0.75rem;
-    color: white;
     font-size: 0.9rem;
     min-width: 150px;
 }
@@ -689,73 +695,85 @@ $seo_status_options = [
     from { transform: translateX(0); opacity: 1; }
     to { transform: translateX(100%); opacity: 0; }
 }
+
+/* Erste Reihe: 4 Boxen */
+.stats-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
 </style>
 
 <div class="seo-ai-master-plugin">
     <div class="wrap">
+        <!-- Plugin-Header wie im Dashboard -->
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-list-ul" aria-hidden="true"></i>
+                SEO AI Master
+            </div>
+            <div class="header-controls">
+                <div class="api-status">
+                    <span class="api-indicator <?php echo $claude_connected ? 'online' : 'offline'; ?>">CLAUDE</span>
+                    <span class="api-indicator <?php echo $gpt4o_connected ? 'online' : 'offline'; ?>">GPT-4O</span>
+                    <span class="api-indicator <?php echo $gpt4_connected ? 'online' : 'offline'; ?>">GPT-4</span>
+                    <span class="api-indicator <?php echo $gemini_connected ? 'online' : 'offline'; ?>">GEMINI</span>
+                </div>
+                <div class="user-menu">
+                    <i class="fas fa-user"></i>
+                    <?php echo esc_html(wp_get_current_user()->display_name); ?>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Navigation wie im Dashboard -->
+        <nav class="nav-tabs">
+            <a href="<?php echo admin_url('admin.php?page=seo-ai-master'); ?>" class="nav-tab">Dashboard</a>
+            <a href="<?php echo admin_url('admin.php?page=seo-ai-urls'); ?>" class="nav-tab active">URLs Verwalten</a>
+            <a href="<?php echo admin_url('admin.php?page=seo-ai-optimizer'); ?>" class="nav-tab">AI Optimizer</a>
+            <a href="<?php echo admin_url('admin.php?page=seo-ai-analytics'); ?>" class="nav-tab">Analytics</a>
+            <a href="<?php echo admin_url('admin.php?page=seo-ai-settings'); ?>" class="nav-tab">Einstellungen</a>
+        </nav>
         <h1>
             <i class="fas fa-list-ul" aria-hidden="true"></i>
             <?php _e('URL Management', 'seo-ai-master'); ?>
         </h1>
         
-        <?php settings_errors('seo_ai_master'); ?>
-        
-        <!-- Statistics Grid -->
-        <div class="stats-grid">
+        <!-- Statistics Grid: Erste Reihe mit 4 Boxen -->
+        <div class="stats-grid-4">
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <h3 class="stat-card-title">
-                        <i class="fas fa-globe" aria-hidden="true"></i>
-                        <?php _e('Gesamt URLs', 'seo-ai-master'); ?>
-                    </h3>
+                    <h3 class="stat-card-title"><i class="fas fa-globe" aria-hidden="true"></i> <?php _e('Gesamt URLs', 'seo-ai-master'); ?></h3>
                 </div>
                 <div class="stat-card-value"><?php echo number_format_i18n($stats['total_urls']); ?></div>
                 <div class="stat-card-subtitle">
-                    <?php printf(__('%d Beiträge • %d Seiten • %d Produkte', 'seo-ai-master'), 
-                        $stats['breakdown']['posts'], 
-                        $stats['breakdown']['pages'], 
-                        $stats['breakdown']['products']); ?>
+                    <?php printf(__('%d Beiträge • %d Seiten • %d Produkte', 'seo-ai-master'), $stats['breakdown']['posts'], $stats['breakdown']['pages'], $stats['breakdown']['products']); ?>
                 </div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <h3 class="stat-card-title">
-                        <i class="fas fa-chart-line" aria-hidden="true"></i>
-                        <?php _e('SEO Analysiert', 'seo-ai-master'); ?>
-                    </h3>
+                    <h3 class="stat-card-title"><i class="fas fa-chart-line" aria-hidden="true"></i> <?php _e('SEO Analysiert', 'seo-ai-master'); ?></h3>
                 </div>
                 <div class="stat-card-value"><?php echo number_format_i18n($stats['analyzed']); ?></div>
                 <div class="stat-card-subtitle">
-                    <?php printf(__('Ø Score: %d • %d nicht analysiert', 'seo-ai-master'), 
-                        $stats['avg_score'], 
-                        $stats['not_analyzed']); ?>
+                    <?php printf(__('Ø Score: %d • %d nicht analysiert', 'seo-ai-master'), $stats['avg_score'], $stats['not_analyzed']); ?>
                 </div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <h3 class="stat-card-title">
-                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                        <?php _e('Kritische URLs', 'seo-ai-master'); ?>
-                    </h3>
+                    <h3 class="stat-card-title"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> <?php _e('Kritische URLs', 'seo-ai-master'); ?></h3>
                 </div>
                 <div class="stat-card-value" style="color: #ef4444;"><?php echo number_format_i18n($stats['critical_urls']); ?></div>
                 <div class="stat-card-subtitle"><?php _e('Score < 60 - benötigen Aufmerksamkeit', 'seo-ai-master'); ?></div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-card-header">
-                    <h3 class="stat-card-title">
-                        <i class="fas fa-tags" aria-hidden="true"></i>
-                        <?php _e('Fehlende Meta-Daten', 'seo-ai-master'); ?>
-                    </h3>
+                    <h3 class="stat-card-title"><i class="fas fa-tags" aria-hidden="true"></i> <?php _e('Fehlende Meta-Daten', 'seo-ai-master'); ?></h3>
                 </div>
                 <div class="stat-card-value" style="color: #f59e0b;"><?php echo number_format_i18n($stats['missing_titles']); ?></div>
                 <div class="stat-card-subtitle">
-                    <?php printf(__('%d ohne Titel • %d ohne Beschreibung', 'seo-ai-master'), 
-                        $stats['missing_titles'], 
-                        $stats['missing_descriptions']); ?>
+                    <?php printf(__('%d ohne Titel • %d ohne Beschreibung', 'seo-ai-master'), $stats['missing_titles'], $stats['missing_descriptions']); ?>
                 </div>
             </div>
         </div>
@@ -1140,7 +1158,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // URL Analysis Functions
 function analyzeURL(postId) {
     if (!postId || postId <= 0) {
-        showNotification('<?php esc_js_e('Ungültige URL-ID', 'seo-ai-master'); ?>', 'error');
+        showNotification('<?php echo esc_js( __('Ungültige URL-ID', 'seo-ai-master') ); ?>', 'error');
         return;
     }
     
@@ -1166,15 +1184,15 @@ function analyzeURL(postId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification('✅ <?php esc_js_e('URL erfolgreich analysiert', 'seo-ai-master'); ?>', 'success');
+            showNotification('✅ <?php echo esc_js( __('URL erfolgreich analysiert', 'seo-ai-master') ); ?>', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
-            showNotification('❌ ' + (data.data || '<?php esc_js_e('Analyse fehlgeschlagen', 'seo-ai-master'); ?>'), 'error');
+            showNotification('❌ ' + (data.data || '<?php echo esc_js( __('Analyse fehlgeschlagen', 'seo-ai-master') ); ?>'), 'error');
         }
     })
     .catch(error => {
         console.error('URL Analysis Error:', error);
-        showNotification('❌ <?php esc_js_e('Netzwerkfehler', 'seo-ai-master'); ?>', 'error');
+        showNotification('❌ <?php echo esc_js( __('Netzwerkfehler', 'seo-ai-master') ); ?>', 'error');
     })
     .finally(() => {
         button.innerHTML = originalHTML;
@@ -1184,7 +1202,7 @@ function analyzeURL(postId) {
 
 function generateMeta(postId) {
     if (!postId || postId <= 0) {
-        showNotification('<?php esc_js_e('Ungültige URL-ID', 'seo-ai-master'); ?>', 'error');
+        showNotification('<?php echo esc_js( __('Ungültige URL-ID', 'seo-ai-master') ); ?>', 'error');
         return;
     }
     
@@ -1210,15 +1228,15 @@ function generateMeta(postId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification('✅ <?php esc_js_e('Meta-Daten erfolgreich generiert', 'seo-ai-master'); ?>', 'success');
+            showNotification('✅ <?php echo esc_js( __('Meta-Daten erfolgreich generiert', 'seo-ai-master') ); ?>', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
-            showNotification('❌ ' + (data.data || '<?php esc_js_e('Meta-Generierung fehlgeschlagen', 'seo-ai-master'); ?>'), 'error');
+            showNotification('❌ ' + (data.data || '<?php echo esc_js( __('Meta-Generierung fehlgeschlagen', 'seo-ai-master') ); ?>'), 'error');
         }
     })
     .catch(error => {
         console.error('Meta Generation Error:', error);
-        showNotification('❌ <?php esc_js_e('Netzwerkfehler', 'seo-ai-master'); ?>', 'error');
+        showNotification('❌ <?php echo esc_js( __('Netzwerkfehler', 'seo-ai-master') ); ?>', 'error');
     })
     .finally(() => {
         button.innerHTML = originalHTML;
@@ -1227,7 +1245,7 @@ function generateMeta(postId) {
 }
 
 function removeFromMonitoring(postId) {
-    if (!confirm('<?php esc_js_e('URL wirklich aus SEO-Monitoring entfernen?', 'seo-ai-master'); ?>')) {
+    if (!confirm('<?php echo esc_js( __('URL wirklich aus SEO-Monitoring entfernen?', 'seo-ai-master') ); ?>')) {
         return;
     }
     
@@ -1253,15 +1271,15 @@ function removeFromMonitoring(postId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification('✅ ' + (data.data?.message || '<?php esc_js_e('URL entfernt', 'seo-ai-master'); ?>'), 'success');
+            showNotification('✅ ' + (data.data?.message || '<?php echo esc_js( __('URL entfernt', 'seo-ai-master') ); ?>'), 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
-            showNotification('❌ ' + (data.data || '<?php esc_js_e('Entfernung fehlgeschlagen', 'seo-ai-master'); ?>'), 'error');
+            showNotification('❌ ' + (data.data || '<?php echo esc_js( __('Entfernung fehlgeschlagen', 'seo-ai-master') ); ?>'), 'error');
         }
     })
     .catch(error => {
         console.error('URL Removal Error:', error);
-        showNotification('❌ <?php esc_js_e('Netzwerkfehler', 'seo-ai-master'); ?>', 'error');
+        showNotification('❌ <?php echo esc_js( __('Netzwerkfehler', 'seo-ai-master') ); ?>', 'error');
     })
     .finally(() => {
         button.innerHTML = originalHTML;
@@ -1273,7 +1291,7 @@ function removeFromMonitoring(postId) {
 function bulkAnalyzeURLs() {
     const selected = Array.from(document.querySelectorAll('.url-checkbox:checked')).map(cb => cb.value);
     if (selected.length === 0) {
-        showNotification('<?php esc_js_e('Bitte wählen Sie mindestens eine URL aus', 'seo-ai-master'); ?>', 'error');
+        showNotification('<?php echo esc_js( __('Bitte wählen Sie mindestens eine URL aus', 'seo-ai-master') ); ?>', 'error');
         return;
     }
     
@@ -1283,7 +1301,7 @@ function bulkAnalyzeURLs() {
     
     const button = event.target;
     const originalHTML = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner spinner"></i> <?php esc_js_e('Analysiere...', 'seo-ai-master'); ?>';
+    button.innerHTML = '<i class="fas fa-spinner spinner"></i> <?php echo esc_js( __('Analysiere...', 'seo-ai-master') ); ?>';
     button.disabled = true;
     
     fetch('<?php echo esc_url_raw(admin_url('admin-ajax.php')); ?>', {
@@ -1301,15 +1319,15 @@ function bulkAnalyzeURLs() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification('✅ ' + (data.data?.message || '<?php esc_js_e('Bulk-Analyse abgeschlossen', 'seo-ai-master'); ?>'), 'success');
+            showNotification('✅ ' + (data.data?.message || '<?php echo esc_js( __('Bulk-Analyse abgeschlossen', 'seo-ai-master') ); ?>'), 'success');
             setTimeout(() => location.reload(), 2000);
         } else {
-            showNotification('❌ ' + (data.data || '<?php esc_js_e('Bulk-Analyse fehlgeschlagen', 'seo-ai-master'); ?>'), 'error');
+            showNotification('❌ ' + (data.data || '<?php echo esc_js( __('Bulk-Analyse fehlgeschlagen', 'seo-ai-master') ); ?>'), 'error');
         }
     })
     .catch(error => {
         console.error('Bulk Analysis Error:', error);
-        showNotification('❌ <?php esc_js_e('Netzwerkfehler bei Bulk-Analyse', 'seo-ai-master'); ?>', 'error');
+        showNotification('❌ <?php echo esc_js( __('Netzwerkfehler bei Bulk-Analyse', 'seo-ai-master') ); ?>', 'error');
     })
     .finally(() => {
         button.innerHTML = originalHTML;
@@ -1320,17 +1338,17 @@ function bulkAnalyzeURLs() {
 function bulkGenerateMeta() {
     const selected = Array.from(document.querySelectorAll('.url-checkbox:checked')).map(cb => cb.value);
     if (selected.length === 0) {
-        showNotification('<?php esc_js_e('Bitte wählen Sie mindestens eine URL aus', 'seo-ai-master'); ?>', 'error');
+        showNotification('<?php echo esc_js( __('Bitte wählen Sie mindestens eine URL aus', 'seo-ai-master') ); ?>', 'error');
         return;
     }
     
-    showNotification('<?php esc_js_e('Bulk Meta-Generierung wird implementiert...', 'seo-ai-master'); ?>', 'info');
+    showNotification('<?php echo esc_js( __('Bulk Meta-Generierung wird implementiert...', 'seo-ai-master') ); ?>', 'info');
 }
 
 function bulkRemoveMonitoring() {
     const selected = Array.from(document.querySelectorAll('.url-checkbox:checked')).map(cb => cb.value);
     if (selected.length === 0) {
-        showNotification('<?php esc_js_e('Bitte wählen Sie mindestens eine URL aus', 'seo-ai-master'); ?>', 'error');
+        showNotification('<?php echo esc_js( __('Bitte wählen Sie mindestens eine URL aus', 'seo-ai-master') ); ?>', 'error');
         return;
     }
     
@@ -1338,7 +1356,7 @@ function bulkRemoveMonitoring() {
         return;
     }
     
-    showNotification('<?php esc_js_e('Bulk-Entfernung wird implementiert...', 'seo-ai-master'); ?>', 'info');
+    showNotification('<?php echo esc_js( __('Bulk-Entfernung wird implementiert...', 'seo-ai-master') ); ?>', 'info');
 }
 
 // View Mode Change
@@ -1392,7 +1410,7 @@ function exportURLs() {
     form.submit();
     document.body.removeChild(form);
     
-    showNotification('<?php esc_js_e('Export wird vorbereitet...', 'seo-ai-master'); ?>', 'info');
+    showNotification('<?php echo esc_js( __('Export wird vorbereitet...', 'seo-ai-master') ); ?>', 'info');
 }
 
 // Notification System

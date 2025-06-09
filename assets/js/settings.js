@@ -689,7 +689,7 @@
                 } else {
                     $input.attr('type', 'password');
                     $icon.removeClass('fa-eye-slash').addClass('fa-eye');
-                    $input.attr('aria-label', 'API-Key versteckt - zum Anzeigen klicken');
+                    $icon.attr('aria-label', 'API-Key versteckt - zum Anzeigen klicken');
                 }
             } catch (e) {
                 console.error('SEO AI Master: Password visibility toggle error:', e);
@@ -824,4 +824,137 @@
         initialize();
     });
     
+    // =============================
+    // URL-Manager: Globale Funktionen
+    // =============================
+    
+    // Hilfsfunktion für AJAX-Requests
+    function urlManagerAjax(action, data, onSuccess, onError) {
+        if (!ajaxConfig.nonce) {
+            showToast('Sicherheitsfehler: Seite neu laden erforderlich', 'error');
+            return;
+        }
+        data = data || {};
+        data.action = action;
+        data.nonce = ajaxConfig.nonce;
+        $.post(ajaxConfig.url, data)
+            .done(function(resp) {
+                if (resp.success) {
+                    if (onSuccess) onSuccess(resp.data, resp);
+                } else {
+                    showToast(resp.data || 'Fehler bei der Anfrage', 'error');
+                    if (onError) onError(resp.data, resp);
+                }
+            })
+            .fail(function(xhr) {
+                showToast('Serverfehler: ' + (xhr.statusText || 'Unbekannt'), 'error');
+                if (onError) onError(xhr.statusText, xhr);
+            });
+    }
+
+    // Einzel-Analyse
+    window.analyzeURL = function(postId) {
+        if (!postId) return;
+        showToast('SEO-Analyse läuft...', 'info');
+        urlManagerAjax('seo_ai_url_analyze', { post_id: postId }, function(data) {
+            showToast('Analyse abgeschlossen!', 'success');
+            location.reload();
+        });
+    };
+
+    // Einzel-Meta generieren
+    window.generateMeta = function(postId) {
+        if (!postId) return;
+        showToast('Meta-Daten werden generiert...', 'info');
+        urlManagerAjax('seo_ai_url_generate_meta', { post_id: postId }, function(data) {
+            showToast('Meta-Daten generiert!', 'success');
+            location.reload();
+        });
+    };
+
+    // Einzel-URL aus Monitoring entfernen
+    window.removeFromMonitoring = function(postId) {
+        if (!postId) return;
+        if (!confirm('Diese URL wirklich aus dem Monitoring entfernen?')) return;
+        urlManagerAjax('seo_ai_url_delete', { post_id: postId }, function(data) {
+            showToast('URL entfernt.', 'success');
+            location.reload();
+        });
+    };
+
+    // Bulk: Analyse
+    window.bulkAnalyzeURLs = function() {
+        const ids = getSelectedURLIds();
+        if (!ids.length) return showToast('Keine URLs ausgewählt.', 'warning');
+        showToast('Bulk-Analyse läuft...', 'info');
+        urlManagerAjax('seo_ai_url_bulk_analyze', { post_ids: ids }, function(data) {
+            showToast('Bulk-Analyse abgeschlossen!', 'success');
+            location.reload();
+        });
+    };
+
+    // Bulk: Meta generieren
+    window.bulkGenerateMeta = function() {
+        const ids = getSelectedURLIds();
+        if (!ids.length) return showToast('Keine URLs ausgewählt.', 'warning');
+        showToast('Bulk-Meta-Generierung läuft...', 'info');
+        urlManagerAjax('seo_ai_url_bulk_generate_meta', { post_ids: ids }, function(data) {
+            showToast('Meta-Daten generiert!', 'success');
+            location.reload();
+        });
+    };
+
+    // Bulk: Aus Monitoring entfernen
+    window.bulkRemoveMonitoring = function() {
+        const ids = getSelectedURLIds();
+        if (!ids.length) return showToast('Keine URLs ausgewählt.', 'warning');
+        if (!confirm('Ausgewählte URLs wirklich entfernen?')) return;
+        urlManagerAjax('seo_ai_url_bulk_remove', { post_ids: ids }, function(data) {
+            showToast('URLs entfernt.', 'success');
+            location.reload();
+        });
+    };
+
+    // Auswahl aufheben
+    window.clearURLSelection = function() {
+        $('.url-checkbox').prop('checked', false);
+        updateBulkSelection();
+    };
+
+    // Auswahl aktualisieren
+    window.updateBulkSelection = function() {
+        const count = getSelectedURLIds().length;
+        $('#selected-urls-count').text(count);
+        if (count > 0) {
+            $('#bulk-actions').show();
+        } else {
+            $('#bulk-actions').hide();
+        }
+    };
+
+    // Alle URLs auswählen/abwählen
+    window.toggleAllURLs = function(checkbox) {
+        const checked = $(checkbox).is(':checked');
+        $('.url-checkbox').prop('checked', checked);
+        updateBulkSelection();
+    };
+
+    // Export-Funktion (CSV)
+    window.exportURLs = function() {
+        showToast('Export wird vorbereitet...', 'info');
+        const ids = getSelectedURLIds();
+        const params = $.param({
+            action: 'seo_ai_url_export',
+            nonce: ajaxConfig.nonce,
+            post_ids: ids
+        });
+        window.open(ajaxConfig.url + '?' + params, '_blank');
+    };
+
+    // Hilfsfunktion: IDs der ausgewählten URLs
+    function getSelectedURLIds() {
+        return $('.url-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+    }
 })(jQuery);

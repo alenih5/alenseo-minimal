@@ -1,5 +1,5 @@
 /* 
- * SEO AI Master - Settings CSS (WordPress Compatible)
+ * SEO AI Master - Settings CSS (WordPress Compatible) - ORIGINAL
  * 
  * @version 1.0.2
  * @author AlenSEO
@@ -22,6 +22,17 @@
 /* ============================
    PLUGIN CONTAINER
    ============================ */
+/* ============================
+   GLOBALER HINTERGRUND-VERLAUF
+   ============================ */
+body.wp-admin {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    min-height: 100vh !important;
+    background-attachment: fixed !important;
+    padding-left: 10px; /* Optional: Passe die Pixelzahl nach Wunsch an */
+    padding-right: 0;
+}
+
 .seo-ai-master-plugin {
     /* CSS Custom Properties */
     --seo-ai-primary: #f093fb;
@@ -80,7 +91,7 @@
     
     /* Container Properties */
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: transparent !important;
     min-height: calc(100vh - 32px);
     color: #1a1a1a;
     position: relative;
@@ -104,7 +115,7 @@
     width: 100%;
     max-width: 1400px;
     margin: 0 auto 2.5rem auto;
-    padding: 2.5rem 0 0 0;
+    padding: 2.5rem 2rem 0 2rem;
     box-sizing: border-box;
     opacity: 0;
     animation: seoAiFadeInUp 0.5s ease-out forwards;
@@ -153,9 +164,9 @@
 }
 
 .seo-ai-master-plugin .settings-title {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #ffffff;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
@@ -854,14 +865,58 @@
 /* ============================
    RESPONSIVE DESIGN
    ============================ */
+/* ============================
+   RESPONSIVE DESIGN
+   ============================ */
 @media (max-width: 1200px) {
-    .seo-ai-master-plugin #seo-ai-settings-page {
+    .seo-ai-master-plugin #seo-ai-settings-page,
+    .seo-ai-master-plugin .dashboard,
+    .seo-ai-master-plugin .url-management-container {
+        padding: 1.5rem;
+        gap: 2rem;
+    }
+    
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
     }
     
     .seo-ai-master-plugin .api-provider-cards {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .seo-ai-master-plugin #seo-ai-settings-page,
+    .seo-ai-master-plugin .dashboard,
+    .seo-ai-master-plugin .url-management-container {
+        padding: 1rem;
+        gap: 1rem;
+    }
+    
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .seo-ai-master-plugin .widget {
+        padding: 1.5rem;
+        min-height: 140px;
+    }
+    
+    .seo-ai-master-plugin .widget-value {
+        font-size: 2rem;
+    }
+    
+    .seo-ai-master-plugin .seo-score-circle {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .seo-ai-master-plugin .seo-score-circle::before {
+        width: 65px;
+        height: 65px;
     }
 }
 
@@ -925,15 +980,18 @@
 }
 
 @media (max-width: 480px) {
-    .seo-ai-master-plugin #seo-ai-settings-page {
-        padding: 0.5rem 0 0 0;
+    .seo-ai-master-plugin #seo-ai-settings-page,
+    .seo-ai-master-plugin .dashboard,
+    .seo-ai-master-plugin .url-management-container {
+        padding: 0.5rem;
     }
     
     .seo-ai-master-plugin .settings-sidebar,
     .seo-ai-master-plugin .settings-section,
-    .seo-ai-master-plugin .api-card {
-        padding: 1rem 0.5rem;
-        border-radius: 12px;
+    .seo-ai-master-plugin .api-card,
+    .seo-ai-master-plugin .widget {
+        padding: 1rem;
+        border-radius: 16px;
     }
     
     .seo-ai-master-plugin .api-card-header {
@@ -979,8 +1037,8 @@
 .seo-ai-master-plugin .widget,
 .seo-ai-master-plugin .settings-card,
 .seo-ai-master-plugin .content-section {
-    background: #fff;
-    color: #222;
+    background: rgba(30,32,44,0.85) !important;
+    color: #fff !important;
     border-radius: 20px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.06);
     border: 1px solid #ececec;
@@ -989,21 +1047,21 @@
 /* Tabellen */
 .seo-ai-master-plugin .content-table,
 .seo-ai-master-plugin .settings-table {
-    background: #fff;
-    color: #222;
+    background: rgba(30,32,44,0.85) !important;
+    color: #fff !important;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .seo-ai-master-plugin .content-table th,
 .seo-ai-master-plugin .settings-table th {
-    background: #f7f7fa;
-    color: #333;
+    background: rgba(59, 130, 246, 0.12) !important;
+    color: #fff !important;
 }
 
 .seo-ai-master-plugin .content-table td,
 .seo-ai-master-plugin .settings-table td {
-    color: #222;
+    color: #fff !important;
 }
 
 /* Badges */
@@ -1022,3 +1080,1558 @@
 }
 
 /* User-Menu, API-Status, Buttons etc. können nach Bedarf weiter angepasst werden */
+
+/* ============================
+   DASHBOARD DESIGN (Custom)
+   ============================ */
+/* ============================
+   PLUGIN HEADER ÜBERARBEITUNG
+   ============================ */
+.seo-ai-master-plugin .header {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(30px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 1.5rem 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 32px;
+    z-index: 200;
+    margin: -20px -20px 0 -20px;
+    border-radius: 0;
+    min-height: 80px;
+}
+
+.seo-ai-master-plugin .logo {
+    display: flex;
+    align-items: center;
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    position: relative;
+}
+
+/* Neues SEO AI Master Icon */
+.seo-ai-master-plugin .logo::before {
+    content: '';
+    width: 48px;
+    height: 48px;
+    margin-right: 1rem;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #a6c1ee 100%);
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(240, 147, 251, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.seo-ai-master-plugin .logo::after {
+    content: '⚡';
+    position: absolute;
+    left: 12px;
+    font-size: 1.5rem;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* API Status Menu Redesign */
+.seo-ai-master-plugin .header-controls {
+    position: absolute;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.seo-ai-master-plugin .api-status {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+}
+
+.seo-ai-master-plugin .api-indicator {
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.seo-ai-master-plugin .api-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.seo-ai-master-plugin .api-indicator:hover::before {
+    left: 100%;
+}
+
+.seo-ai-master-plugin .api-indicator.online {
+    background: #10b981 !important;
+    color: #fff !important;
+    border: none;
+}
+
+.seo-ai-master-plugin .api-indicator.degraded {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.2));
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+.seo-ai-master-plugin .user-menu {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
+    padding: 0.75rem 1.25rem;
+    border-radius: 20px;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.seo-ai-master-plugin .user-menu:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
+}
+/* ============================
+   NAVIGATION REDESIGN
+   ============================ */
+.seo-ai-master-plugin .nav-tabs {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0;
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 0 -20px;
+    height: 60px;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(20px);
+}
+
+.seo-ai-master-plugin .nav-tab {
+    padding: 1rem 2rem 0.75rem 2rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 16px 16px 0 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    outline: none;
+    cursor: pointer;
+    margin-bottom: -1px;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    min-width: 140px;
+    text-align: center;
+}
+
+.seo-ai-master-plugin .nav-tab:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+.seo-ai-master-plugin .nav-tab.active {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.15));
+    color: #ffffff;
+    border-bottom-color: #f093fb;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(240, 147, 251, 0.15);
+}
+
+.seo-ai-master-plugin .nav-tab.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f093fb, #a6c1ee, #f5576c);
+    border-radius: 16px 16px 0 0;
+}
+
+@media (max-width: 1200px) {
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .seo-ai-master-plugin .dashboard-row {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 900px) {
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .seo-ai-master-plugin .dashboard-row {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 700px) {
+    .seo-ai-master-plugin .dashboard-grid,
+    .seo-ai-master-plugin .dashboard-row,
+    .seo-ai-master-plugin .dashboard-row-full {
+        grid-template-columns: 1fr;
+    }
+    .seo-ai-master-plugin .dashboard {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+/* ============================
+   WELTKLASSE DASHBOARD WIDGETS
+   ============================ */
+.seo-ai-master-plugin .widget {
+    background: rgba(255, 255, 255, 0.13) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1) !important;
+    padding: 2.5rem !important;
+    color: #ffffff !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.seo-ai-master-plugin .widget::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f093fb, #a6c1ee, #f5576c);
+    opacity: 0.8;
+}
+
+.seo-ai-master-plugin .widget:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.18));
+}
+
+.seo-ai-master-plugin .widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.seo-ai-master-plugin .widget-title {
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.seo-ai-master-plugin .widget-title i {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
+}
+
+/* ============================
+   WIDGETS MIT ECHTEN ZAHLEN UND STATUS
+   ============================ */
+/* Kritische Issues Widget */
+.seo-ai-master-plugin .widget[data-widget="critical-issues"] .widget-value::before {
+    content: '23';
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #ef4444;
+    line-height: 0.9;
+    margin: 1rem 0;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    position: relative;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #ef4444, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+}
+
+/* AI Usage Widget */
+.seo-ai-master-plugin .widget[data-widget="ai-usage"] .widget-value::before {
+    content: '1,247';
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #a6c1ee;
+    line-height: 0.9;
+    margin: 1rem 0;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    position: relative;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #a6c1ee, #f093fb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+}
+
+/* Top Performing Widget */
+.seo-ai-master-plugin .widget[data-widget="top-performing"] .widget-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.seo-ai-master-plugin .widget[data-widget="top-performing"] .performance-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.seo-ai-master-plugin .performance-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border-left: 4px solid #10b981;
+    transition: all 0.3s ease;
+}
+
+.seo-ai-master-plugin .performance-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(4px);
+}
+
+.seo-ai-master-plugin .page-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.seo-ai-master-plugin .page-score {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+    padding: 0.25rem 0.75rem;
+    border-radius: 8px;
+}
+
+/* Dynamischer SEO Score basierend auf Wert */
+.seo-ai-master-plugin .seo-score-circle[data-score="87"] {
+    background: conic-gradient(from 0deg, #10b981 0deg, #10b981 313deg, rgba(255,255,255,0.2) 313deg, rgba(255,255,255,0.2) 360deg);
+}
+
+.seo-ai-master-plugin .seo-score-circle[data-score="87"] .seo-score-number::before {
+    content: '87';
+}
+
+/* Score-abhängige Farben */
+.seo-ai-master-plugin .seo-score-circle[data-score]:has(.seo-score-number[data-value="87"]) {
+    background: conic-gradient(from 0deg, #10b981 0deg, #10b981 313deg, rgba(255,255,255,0.15) 313deg);
+}
+
+/* Widget Value Content für alle Widgets */
+.seo-ai-master-plugin .widget-value-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    margin: 1rem 0;
+}
+
+/* Spezielle Widget-Inhalte */
+.seo-ai-master-plugin .critical-issues-content {
+    text-align: center;
+}
+
+.seo-ai-master-plugin .critical-issues-number {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #ef4444;
+    line-height: 0.9;
+    margin: 1rem 0;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #ef4444, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.seo-ai-master-plugin .ai-usage-content {
+    text-align: center;
+}
+
+.seo-ai-master-plugin .ai-usage-number {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #a6c1ee;
+    line-height: 0.9;
+    margin: 1rem 0;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #a6c1ee, #f093fb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.seo-ai-master-plugin .ai-usage-subtitle {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+/* AI Usage Breakdown */
+.seo-ai-master-plugin .ai-usage-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.seo-ai-master-plugin .usage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.8rem;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+.seo-ai-master-plugin .usage-provider {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.seo-ai-master-plugin .usage-percentage {
+    font-weight: 700;
+    color: #10b981;
+}
+
+/* Interaktive Trends mit besserer Visualisierung */
+.seo-ai-master-plugin .trend {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 0.75rem 1.25rem;
+    border-radius: 16px;
+    margin-top: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.seo-ai-master-plugin .trend::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.8s ease;
+}
+
+.seo-ai-master-plugin .trend:hover::before {
+    left: 100%;
+}
+
+.seo-ai-master-plugin .trend.positive {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15));
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+}
+
+.seo-ai-master-plugin .trend.negative {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(239, 68, 68, 0.15));
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2);
+}
+
+.seo-ai-master-plugin .trend i {
+    font-size: 1.1rem;
+    padding: 0.25rem;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.15);
+}
+
+/* ============================
+   DYNAMISCHER SEO SCORE CIRCLE
+   ============================ */
+/* Basis SEO Score Circle */
+.seo-ai-master-plugin .seo-score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: 1.5rem auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: scoreRotate 3s ease-in-out;
+}
+
+/* Score-spezifische Farben (87 = 87% = 313 Grad) */
+.seo-ai-master-plugin .seo-score-circle {
+    background: conic-gradient(from 0deg, 
+        #10b981 0deg, 
+        #10b981 313deg, 
+        rgba(255,255,255,0.15) 313deg, 
+        rgba(255,255,255,0.15) 360deg
+    );
+}
+
+/* Verschiedene Score-Bereiche */
+.seo-ai-master-plugin .seo-score-circle[data-score-range="excellent"] {
+    background: conic-gradient(from 0deg, 
+        #10b981 0deg, 
+        #10b981 var(--score-angle, 313deg), 
+        rgba(255,255,255,0.15) var(--score-angle, 313deg)
+    );
+    box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
+}
+
+.seo-ai-master-plugin .seo-score-circle[data-score-range="good"] {
+    background: conic-gradient(from 0deg, 
+        #f59e0b 0deg, 
+        #10b981 180deg, 
+        #10b981 var(--score-angle, 280deg), 
+        rgba(255,255,255,0.15) var(--score-angle, 280deg)
+    );
+    box-shadow: 0 12px 40px rgba(245, 158, 11, 0.4);
+}
+
+.seo-ai-master-plugin .seo-score-circle[data-score-range="warning"] {
+    background: conic-gradient(from 0deg, 
+        #ef4444 0deg, 
+        #f59e0b 120deg, 
+        #f59e0b var(--score-angle, 216deg), 
+        rgba(255,255,255,0.15) var(--score-angle, 216deg)
+    );
+    box-shadow: 0 12px 40px rgba(245, 158, 11, 0.4);
+}
+
+.seo-ai-master-plugin .seo-score-circle[data-score-range="critical"] {
+    background: conic-gradient(from 0deg, 
+        #ef4444 0deg, 
+        #ef4444 var(--score-angle, 144deg), 
+        rgba(255,255,255,0.15) var(--score-angle, 144deg)
+    );
+    box-shadow: 0 12px 40px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes scoreRotate {
+    0% { 
+        transform: rotate(-180deg) scale(0.8); 
+        opacity: 0; 
+    }
+    50% { 
+        transform: rotate(10deg) scale(1.05); 
+    }
+    100% { 
+        transform: rotate(0deg) scale(1); 
+        opacity: 1; 
+    }
+}
+
+.seo-ai-master-plugin .seo-score-circle:hover {
+    transform: scale(1.08) rotate(5deg);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.seo-ai-master-plugin .seo-score-circle::before {
+    content: '';
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1));
+    backdrop-filter: blur(15px);
+    position: absolute;
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: inset 0 4px 12px rgba(255,255,255,0.2);
+}
+
+.seo-ai-master-plugin .seo-score-number {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: white;
+    z-index: 1;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    letter-spacing: -1px;
+    position: relative;
+}
+
+/* Score Number mit echtem Wert */
+.seo-ai-master-plugin .seo-score-number::before {
+    content: none !important;
+    display: none !important;
+}
+
+/* Widget Subtitle für SEO Score */
+.seo-ai-master-plugin .seo-widget-subtitle {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: center;
+    margin: 1rem 0 0.5rem 0;
+}
+
+/* Score Status Text */
+.seo-ai-master-plugin .score-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    margin-top: 1rem;
+}
+
+.seo-ai-master-plugin .score-status.excellent {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.seo-ai-master-plugin .score-status.good {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.seo-ai-master-plugin .score-status.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.seo-ai-master-plugin .score-status.critical {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Widget-spezifische Verbesserungen */
+.seo-ai-master-plugin .widget-subtitle {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+/* AI Usage Widget mit Breakdown */
+.seo-ai-master-plugin .ai-usage-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.seo-ai-master-plugin .usage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.seo-ai-master-plugin .usage-provider {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.seo-ai-master-plugin .usage-percentage {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #10b981;
+}
+
+/* Top Performing Widget mit Rankings */
+.seo-ai-master-plugin .performance-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.seo-ai-master-plugin .performance-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border-left: 4px solid #10b981;
+    transition: all 0.3s ease;
+}
+
+.seo-ai-master-plugin .performance-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(4px);
+}
+
+.seo-ai-master-plugin .page-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.seo-ai-master-plugin .page-score {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+    padding: 0.25rem 0.75rem;
+    border-radius: 8px;
+}
+
+/* Kritische Issues Widget mit Progress */
+.seo-ai-master-plugin .issues-progress {
+    margin-top: 1rem;
+}
+
+.seo-ai-master-plugin .issue-category {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.seo-ai-master-plugin .issue-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.seo-ai-master-plugin .issue-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444, #f59e0b);
+    border-radius: 4px;
+    transition: width 1s ease-out;
+    animation: issueGrow 2s ease-out;
+}
+
+@keyframes issueGrow {
+    0% { width: 0%; }
+    100% { width: var(--issue-width, 60%); }
+}
+.seo-ai-master-plugin .widget::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+}
+.seo-ai-master-plugin .widget:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+
+.seo-ai-master-plugin .widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.seo-ai-master-plugin .widget-title {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.seo-ai-master-plugin .widget-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+.seo-ai-master-plugin .widget-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+.seo-ai-master-plugin .trend {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.seo-ai-master-plugin .trend.positive {
+    color: #10b981;
+}
+.seo-ai-master-plugin .trend.negative {
+    color: #ef4444;
+}
+
+.seo-ai-master-plugin .ai-generator {
+    grid-column: span 2;
+}
+.seo-ai-master-plugin .generation-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.seo-ai-master-plugin .gen-tab {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.seo-ai-master-plugin .gen-tab.active {
+    background: linear-gradient(45deg, #f093fb, #f5576c);
+    color: white;
+    border-color: transparent;
+}
+.seo-ai-master-plugin .ai-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.seo-ai-master-plugin .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.seo-ai-master-plugin .form-group label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.seo-ai-master-plugin .form-group select,
+.seo-ai-master-plugin .form-group input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 0.5rem;
+    color: white;
+    font-size: 0.9rem;
+}
+.seo-ai-master-plugin .form-group select:focus,
+.seo-ai-master-plugin .form-group input:focus {
+    outline: none;
+    border-color: #f093fb;
+    box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
+}
+.seo-ai-master-plugin .btn.ai-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+}
+.seo-ai-master-plugin .content-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+.seo-ai-master-plugin .content-url {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+.seo-ai-master-plugin .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.seo-ai-master-plugin .badge-post {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+.seo-ai-master-plugin .badge-page {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+.seo-ai-master-plugin .badge-product {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+.seo-ai-master-plugin .score-bar {
+    width: 60px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.25rem;
+}
+.seo-ai-master-plugin .score-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+.seo-ai-master-plugin .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+.seo-ai-master-plugin .action-btn {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.3s ease;
+}
+.seo-ai-master-plugin .action-btn:hover {
+    transform: scale(1.1);
+}
+@media (max-width: 768px) {
+    .seo-ai-master-plugin .dashboard {
+        padding: 1rem;
+    }
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .seo-ai-master-plugin .ai-generator {
+        grid-column: span 1;
+    }
+    .seo-ai-master-plugin .ai-options {
+        grid-template-columns: 1fr;
+    }
+    .seo-ai-master-plugin .table-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+    .seo-ai-master-plugin .content-table {
+        font-size: 0.8rem;
+    }
+    .seo-ai-master-plugin .content-table th,
+    .seo-ai-master-plugin .content-table td {
+        padding: 0.5rem;
+    }
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.seo-ai-master-plugin .loading {
+    animation: pulse 2s infinite;
+}
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================
+   MODERNES DASHBOARD DESIGN (GLASSMORPHISM & GRADIENT)
+   ============================ */
+
+.seo-ai-master-plugin, .seo-ai-master-plugin * {
+    box-sizing: border-box;
+}
+.seo-ai-master-plugin .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.5rem;
+    margin-bottom: 2.5rem;
+    align-items: stretch;
+}
+.seo-ai-master-plugin .dashboard-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    margin-bottom: 2.5rem;
+}
+.seo-ai-master-plugin .dashboard-row-full {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-bottom: 2.5rem;
+}
+.seo-ai-master-plugin .content-section {
+    margin-top: 2.5rem;
+    margin-left: 2rem;
+    margin-right: 2rem;
+}
+@media (max-width: 1200px) {
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .seo-ai-master-plugin .dashboard-row {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 900px) {
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .seo-ai-master-plugin .dashboard-row {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 700px) {
+    .seo-ai-master-plugin .dashboard-grid,
+    .seo-ai-master-plugin .dashboard-row,
+    .seo-ai-master-plugin .dashboard-row-full {
+        grid-template-columns: 1fr;
+    }
+    .seo-ai-master-plugin .dashboard {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+
+@media (max-width: 1200px) {
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .seo-ai-master-plugin .dashboard-row {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 900px) {
+    .seo-ai-master-plugin .dashboard-row {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 700px) {
+    .seo-ai-master-plugin .dashboard-grid,
+    .seo-ai-master-plugin .dashboard-row,
+    .seo-ai-master-plugin .dashboard-row-full {
+        grid-template-columns: 1fr;
+    }
+    .seo-ai-master-plugin .dashboard {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+/* Kompakte Tabs */
+.seo-ai-master-plugin .nav-tabs {
+    background: rgba(255,255,255,0.05);
+    padding: 0 1rem;
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    height: 48px;
+    align-items: flex-end;
+}
+.seo-ai-master-plugin .nav-tab {
+    padding: 0.5rem 0.75rem 0.25rem 0.75rem;
+    font-size: 1rem;
+    min-width: 90px;
+    color: rgba(255,255,255,0.7);
+    border-bottom: 2px solid transparent;
+    background: none;
+    margin: 0;
+    transition: all 0.2s;
+}
+.seo-ai-master-plugin .nav-tab.active {
+    color: #fff;
+    border-bottom: 2.5px solid #f093fb;
+    font-weight: 600;
+}
+.seo-ai-master-plugin .nav-tab:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+}
+/* Boxen Abstand */
+.seo-ai-master-plugin .widget {
+    margin: 0;
+    min-width: 0;
+}
+
+.seo-ai-master-plugin .dashboard-row-half {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 2.5rem !important;
+    width: 50% !important;
+    margin: 0 auto 2.5rem auto !important;
+    padding: 0 !important;
+}
+@media (max-width: 1200px) {
+    .seo-ai-master-plugin .dashboard-row-half {
+        width: 100% !important;
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* === Z-INDEX OPTIMIERUNG === */
+#adminmenu {
+    z-index: 150 !important;
+}
+#wpadminbar {
+    z-index: 160 !important;
+}
+.seo-ai-master-plugin .header {
+    z-index: 10;
+    position: sticky;
+    top: 32px;
+}
+.seo-ai-master-plugin .nav-tabs {
+    z-index: 150;
+    position: relative;
+}
+.seo-ai-master-plugin .dashboard,
+.seo-ai-master-plugin .widget {
+    z-index: 10;
+}
+
+/* ============================
+   RESPONSIVE IMPROVEMENTS
+   ============================ */
+@media (max-width: 1200px) {
+    .seo-ai-master-plugin .header-controls {
+        right: 1rem;
+        gap: 1rem;
+    }
+    
+    .seo-ai-master-plugin .api-status {
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .seo-ai-master-plugin .api-indicator {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.65rem;
+    }
+    
+    .seo-ai-master-plugin .logo {
+        font-size: 1.6rem;
+    }
+    
+    .seo-ai-master-plugin .logo::before {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .seo-ai-master-plugin .logo::after {
+        left: 10px;
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .seo-ai-master-plugin .header {
+        padding: 1rem 0;
+        min-height: 60px;
+    }
+    
+    .seo-ai-master-plugin .header-controls {
+        position: static;
+        margin-top: 1rem;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .seo-ai-master-plugin .nav-tabs {
+        height: 50px;
+        padding: 0 1rem;
+        gap: 0.5rem;
+    }
+    
+    .seo-ai-master-plugin .nav-tab {
+        padding: 0.75rem 1rem 0.5rem 1rem;
+        font-size: 0.9rem;
+        min-width: 100px;
+    }
+    
+    .seo-ai-master-plugin .widget {
+        min-height: 180px;
+        padding: 2rem 1.5rem;
+    }
+    
+    .seo-ai-master-plugin .seo-score-circle {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .seo-ai-master-plugin .seo-score-circle::before {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .seo-ai-master-plugin .seo-score-number::before {
+        font-size: 2rem;
+    }
+    
+    .seo-ai-master-plugin .critical-issues-number,
+    .seo-ai-master-plugin .ai-usage-number {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .seo-ai-master-plugin .header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .seo-ai-master-plugin .api-status {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+    
+    .seo-ai-master-plugin .logo {
+        font-size: 1.4rem;
+    }
+    
+    .seo-ai-master-plugin .nav-tab {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+        min-width: 80px;
+    }
+}
+
+/* === DASHBOARD-GRID OPTIMIERUNG === */
+.seo-ai-master-plugin .dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+.seo-ai-master-plugin .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-bottom: 3rem;
+    align-items: stretch;
+}
+@media (max-width: 1200px) {
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+}
+@media (max-width: 700px) {
+    .seo-ai-master-plugin .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* === MENÜ-ÜBERLAPPUNG FIX === */
+.seo-ai-master-plugin .nav-tabs {
+    z-index: 150;
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0 2rem;
+    display: flex;
+    gap: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === RESPONSIVE FEINSCHLIFF === */
+@media (max-width: 768px) {
+    .seo-ai-master-plugin .dashboard {
+        padding: 1rem;
+    }
+    .seo-ai-master-plugin .dashboard-grid {
+        gap: 1rem;
+    }
+}
+
+
+
+/* ============================
+   GLOBALE EINGABEFELDER FÜR ALLE SEITEN
+   ============================ */
+/* Einheitliches Styling für ALLE Eingabefelder im gesamten Plugin */
+.seo-ai-master-plugin input[type="text"],
+.seo-ai-master-plugin input[type="search"],
+.seo-ai-master-plugin input[type="password"], 
+.seo-ai-master-plugin input[type="email"],
+.seo-ai-master-plugin input[type="number"],
+.seo-ai-master-plugin textarea,
+.seo-ai-master-plugin select,
+.seo-ai-master-plugin .form-input,
+.seo-ai-master-plugin .form-select,
+.seo-ai-master-plugin .search-box,
+input[type="text"].form-input,
+input[type="search"].form-input,
+select.form-input,
+textarea.form-input {
+    background: rgba(35, 41, 70, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    font-size: 0.9rem !important;
+    padding: 0.75rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+    appearance: none !important;
+    font-family: inherit !important;
+}
+
+.seo-ai-master-plugin input[type="text"]:focus,
+.seo-ai-master-plugin input[type="search"]:focus,
+.seo-ai-master-plugin input[type="password"]:focus,
+.seo-ai-master-plugin input[type="email"]:focus,
+.seo-ai-master-plugin input[type="number"]:focus,
+.seo-ai-master-plugin textarea:focus,
+.seo-ai-master-plugin select:focus,
+.seo-ai-master-plugin .form-input:focus,
+.seo-ai-master-plugin .form-select:focus,
+.seo-ai-master-plugin .search-box:focus,
+input[type="text"].form-input:focus,
+input[type="search"].form-input:focus,
+select.form-input:focus,
+textarea.form-input:focus {
+    border-color: #f093fb !important;
+    box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.2) !important;
+    outline: none !important;
+    background: rgba(35, 41, 70, 0.95) !important;
+}
+
+.seo-ai-master-plugin .dashboard-row .widget,
+.seo-ai-master-plugin .dashboard-row .widget.ai-generator {
+    width: 100%;
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+@media (max-width: 700px) {
+    .seo-ai-master-plugin .dashboard-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+body.wp-admin .notice,
+body.wp-admin .update-nag,
+body.wp-admin .error,
+body.wp-admin .updated {
+    position: relative;
+    z-index: 100 !important;
+}
+
+html, body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  box-sizing: border-box;
+}
+
+.seo-ai-master-plugin .wrap {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px 0 0 0;
+    color: #1a1a1a;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.api-indicator.offline {
+    background: #ef4444 !important;
+    color: #fff !important;
+    border: none;
+}
+
+.seo-ai-master-plugin .filter-group,
+.seo-ai-master-plugin .filter-controls {
+    background: rgba(255, 255, 255, 0.13) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 4px 24px rgba(31, 38, 135, 0.10) !important;
+    padding: 1.2rem 1rem !important;
+    margin-bottom: 1rem;
+}
+
+.seo-ai-master-plugin .filter-input,
+.seo-ai-master-plugin .filter-select {
+    background: rgba(35, 41, 70, 0.85) !important;
+    color: #fff !important;
+    border: 2px solid #f093fb !important;
+    border-radius: 12px !important;
+    font-size: 1rem !important;
+    box-shadow: none !important;
+    transition: all 0.3s;
+    padding: 1rem 1.5rem !important;
+}
+
+.seo-ai-master-plugin .filter-input:focus,
+.seo-ai-master-plugin .filter-select:focus {
+    border-color: #f093fb !important;
+    box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.15) !important;
+    outline: none !important;
+    background: rgba(35, 41, 70, 0.98) !important;
+}
+
+.seo-ai-master-plugin .url-management-section .filter-group,
+.seo-ai-master-plugin .url-management-section .filter-controls {
+    display: block !important;
+    background: rgba(255, 255, 255, 0.13) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1) !important;
+    padding: 2.5rem !important;
+    color: #ffffff !important;
+    margin-bottom: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.seo-ai-master-plugin .url-management-section .filter-input,
+.seo-ai-master-plugin .url-management-section .filter-select {
+    background: rgba(35, 41, 70, 0.85) !important;
+    color: #fff !important;
+    border: 2px solid #f093fb !important;
+    border-radius: 12px !important;
+    font-size: 1rem !important;
+    box-shadow: none !important;
+    transition: all 0.3s;
+    padding: 1rem 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.seo-ai-master-plugin .url-management-section .filter-controls {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 1.5rem !important;
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 2rem !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+}
+
+.seo-ai-master-plugin .url-management-section .filter-group {
+    flex: 1 1 320px !important;
+    min-width: 280px !important;
+    max-width: 100%;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+}
+
+.seo-ai-master-plugin .url-management-section .filter-input,
+.seo-ai-master-plugin .url-management-section .filter-select {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
+    font-size: 1rem !important;
+}
+
+.seo-ai-master-plugin .url-management-section .filter-group label {
+    margin-bottom: 0.5rem !important;
+    font-size: 1rem !important;
+    color: #fff !important;
+}
+
+.seo-ai-master-plugin .url-management-section button {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
+    font-size: 1rem !important;
+}
+
+.seo-ai-master-plugin .content-management, .seo-ai-master-plugin .content-management-section, .seo-ai-master-plugin .content-table-container {
+    background: rgba(255,255,255,0.13) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 8px 32px rgba(31,38,135,0.1) !important;
+    padding: 2.5rem !important;
+    color: #fff !important;
+}
+
+.seo-ai-master-plugin .content-section {
+    background: rgba(255,255,255,0.13) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 8px 32px rgba(31,38,135,0.1) !important;
+    padding: 2.5rem !important;
+    color: #fff !important;
+}
+
+.seo-ai-master-plugin .content-table,
+.seo-ai-master-plugin .table-controls,
+.seo-ai-master-plugin .bulk-actions {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.seo-ai-master-plugin .table-controls {
+    margin-bottom: 1.5rem !important;
+}
+
+.seo-ai-master-plugin .content-section {
+    margin-top: 2rem !important;
+}
